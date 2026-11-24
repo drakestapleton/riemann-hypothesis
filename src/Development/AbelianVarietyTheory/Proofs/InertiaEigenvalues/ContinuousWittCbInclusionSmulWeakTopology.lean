@@ -64,6 +64,20 @@ import Mathlib.RingTheory.Henselian
 import Mathlib.RingTheory.RegularLocalRing.Defs
 import Mathlib.RingTheory.SimpleRing.Principal
 
+attribute [-instance]
+  NormedSpace.toModule Submodule.normedSpace Submodule.seminormedAddCommGroup
+  Submodule.normedAddCommGroup SubalgebraClass.toNormedAlgebra
+  Subalgebra.isScalarTower_left Subalgebra.isScalarTower_mid
+  Submonoid.instIsScalarTowerSubtypeMem Submonoid.instSMulCommClassSubtypeMem_1
+  Subalgebra.smulCommClass_right Subalgebra.smulCommClass_left
+  MulSemiringAction.toDistribMulAction
+  RingHomClass.toLinearMapClassNNRat RingHomClass.toLinearMapClassRat
+  NonUnitalAlgHomClass.instLinearMapClass
+  NonUnitalAlgHomClass.instSemilinearMapClassOfNonUnitalAlgSemiHomClassOfClassRingHom
+  Algebra.TensorProduct.instNonUnitalSemiring Algebra.TensorProduct.instNonUnitalRing
+attribute [local instance high]
+  Submodule.module TensorProduct.leftModule Algebra.TensorProduct.leftAlgebra
+
 -- This file was produced by scripts/clump.py from the modules listed below.
 -- Members: Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.ContinuousOfTail, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.ContinuousZlSmul, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.CoordsOneTmulSmul, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.EpsilonRootSubOneIsPseudoUniformizerTilt, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.HighPowCoeffMemSpanPow, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.WeaklySmall, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.TeichmullerRootPowIdealsTendstoZeroWeakTop, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.ExistsPowInclRSmulMem, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.LinearMapPiContinuousCoord, Development.AbelianVarietyTheory.Proofs.InertiaEigenvalues.ContinuousWittCbInclusionSmulWeakTopology
 

@@ -47,6 +47,20 @@ import Mathlib.Topology.Connected.Separation
 import Development.AbelianVarietyTheory.Definitions.Divisors.T2SpaceGeneralLinearGroup
 import Mathlib.Tactic.ReduceModChar
 
+attribute [-instance]
+  NormedSpace.toModule Submodule.normedSpace Submodule.seminormedAddCommGroup
+  Submodule.normedAddCommGroup SubalgebraClass.toNormedAlgebra
+  Subalgebra.isScalarTower_left Subalgebra.isScalarTower_mid
+  Submonoid.instIsScalarTowerSubtypeMem Submonoid.instSMulCommClassSubtypeMem_1
+  Subalgebra.smulCommClass_right Subalgebra.smulCommClass_left
+  MulSemiringAction.toDistribMulAction
+  RingHomClass.toLinearMapClassNNRat RingHomClass.toLinearMapClassRat
+  NonUnitalAlgHomClass.instLinearMapClass
+  NonUnitalAlgHomClass.instSemilinearMapClassOfNonUnitalAlgSemiHomClassOfClassRingHom
+  Algebra.TensorProduct.instNonUnitalSemiring Algebra.TensorProduct.instNonUnitalRing
+attribute [local instance high]
+  Submodule.module TensorProduct.leftModule Algebra.TensorProduct.leftAlgebra
+
 -- This file was produced by scripts/clump.py from the modules listed below.
 -- Members: Development.AutomorphicArithmetic.AutomorphicVarieties.ModularityArgument.ThresholdArguments.DenseThresholdCases.LevelUR2Compat, Development.AutomorphicArithmetic.AutomorphicVarieties.ModularityArgument.ThresholdArguments.DenseThresholdCases.LevelUR2ActEx
 
