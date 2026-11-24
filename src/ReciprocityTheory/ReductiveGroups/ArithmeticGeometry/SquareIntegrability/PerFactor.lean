@@ -156,7 +156,7 @@ theorem t_assemble [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) {I : Submo
     have : Real.pi * P.ph / (r1 : ℝ) ^ 4 ≤ Real.pi / 2 * ∑ j, D j := by
       rw [div_le_iff₀ hr4]
       have := mul_le_mul_of_nonneg_left hu2 Real.pi_pos.le
-      nlinarith
+      grind
     linarith
   calc _ ≤ _ := h1
     _ = _ := h2
@@ -278,11 +278,10 @@ theorem tof_gauss_min_sum [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) {I 
     intro y hy
     obtain ⟨x, hx, rfl⟩ := hF y hy
     have h1 : ‖u - uMap I y0‖ ≤ ‖u - uMap I x‖ := hmin x hx
-    have h2 : ‖u - uMap I y0‖ ^ 2 ≤ ‖u - uMap I x‖ ^ 2 := by
-      nlinarith [mul_self_le_mul_self hc0 h1]
+    have h2 : ‖u - uMap I y0‖ ^ 2 ≤ ‖u - uMap I x‖ ^ 2 := pow_le_pow_left₀ hc0 h1 2
     rw [← Real.exp_add]
     apply Real.exp_le_exp.mpr
-    nlinarith [mul_le_mul_of_nonneg_left h2 Real.pi_pos.le]
+    linarith [mul_le_mul_of_nonneg_left h2 Real.pi_pos.le]
   calc ∑ y ∈ F, Real.exp (-Real.pi * ‖u - y‖ ^ 2)
       ≤ ∑ y ∈ F, Real.exp (-(Real.pi / 2) * ‖u - uMap I y0‖ ^ 2) *
           Real.exp (-(Real.pi / 2) * ‖u - y‖ ^ 2) := Finset.sum_le_sum hterm
@@ -329,15 +328,15 @@ theorem short_vector_bound_le_kappa [IsCMField E] {X : PT E} {DF : ℕ} (P : Par
   have hd : (dstar (E := E) P.m : ℝ) = 2 * (PT.f E : ℝ) * P.m := by unfold dstar; push_cast; ring
   rw [hd, div_le_iff₀ (by linarith)]
   have key1 : (PT.f E : ℝ) * (P.m : ℝ) ^ 2 ≤ PT.rd E ^ 2 := by
-    nlinarith [mul_le_mul_of_nonneg_left hM2 (by linarith : (0 : ℝ) ≤ PT.f E),
+    linarith [mul_le_mul_of_nonneg_left hM2 (by linarith : (0 : ℝ) ≤ PT.f E),
       mul_le_mul hFR hFR (by linarith) (by linarith)]
   have h3 : PT.rd E ^ 4 * (PT.f E : ℝ) ≤ PT.rd E ^ 7 * PT.f E :=
     mul_le_mul_of_nonneg_right (pow_le_pow_right₀ (by linarith) (by norm_num)) (by linarith)
   have h4 := mul_le_mul_of_nonneg_left key1 (by positivity : (0 : ℝ) ≤ 4 * PT.rd E ^ 2 * PT.f E)
   have key2 : PT.rd E ^ 2 * (2 * (PT.f E : ℝ) * P.m) ^ 2 ≤ 8 * PT.rd E ^ 7 * PT.f E := by
-    nlinarith [h3, h4, (by positivity : (0 : ℝ) ≤ PT.rd E ^ 7 * PT.f E)]
+    linarith [h3, h4, (by positivity : (0 : ℝ) ≤ PT.rd E ^ 7 * PT.f E)]
   have hd2 := mul_nonneg (sq_nonneg (2 * (PT.f E : ℝ) * P.m)) hph'.le
-  nlinarith [mul_le_mul_of_nonneg_right key2 hd2]
+  linarith [mul_le_mul_of_nonneg_right key2 hd2]
 
 theorem tof_inv_sqrt_le [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) (hph : 0 < P.ph) (n : ℕ)
     (hn : n ≤ dstar (E := E) P.m) (c : ℝ) (hc : 0 < c)
@@ -352,7 +351,10 @@ theorem tof_inv_sqrt_le [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) (hph 
   have hdR : ((dstar (E := E) P.m : ℕ) : ℝ) = 2 * (PT.f E : ℝ) * P.m := by
     unfold dstar; push_cast; ring
   have hm1 : (1 : ℝ) ≤ P.m := by exact_mod_cast P.hm1
-  have hd1 : (1 : ℝ) ≤ ((dstar (E := E) P.m : ℕ) : ℝ) := by rw [hdR]; nlinarith
+  have hd1 : (1 : ℝ) ≤ ((dstar (E := E) P.m : ℕ) : ℝ) := by
+    rw [hdR]
+    linarith [one_le_mul_of_one_le_of_one_le hF hm1,
+      show 2 * (PT.f E : ℝ) * P.m = 2 * ((PT.f E : ℝ) * P.m) by ring]
   have hph2 := hph
   unfold Par.ph PT.ph at hph2
   split_ifs at hph2 with hlt
@@ -368,13 +370,15 @@ theorem tof_inv_sqrt_le [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) (hph 
   have hC1 := P.C1
   have hom : (1 : ℝ) ≤ omStar (E := E) := by
     unfold omStar
-    first
-      | nlinarith [Real.one_le_rpow hF (by norm_num : (0 : ℝ) ≤ 3 / 2)]
+    have hfp := Real.one_le_rpow hF (by norm_num : (0 : ℝ) ≤ 3 / 2)
+    have hprod := one_le_mul_of_one_le_of_one_le hfp (by linarith : (1 : ℝ) ≤ PT.rd E)
+    linarith [show 2 * (PT.f E : ℝ) ^ (3 / 2 : ℝ) * PT.rd E =
+      2 * ((PT.f E : ℝ) ^ (3 / 2 : ℝ) * PT.rd E) by ring]
   have hZ : (1 : ℝ) ≤ ((dstar (E := E) P.m : ℕ) : ℝ) ^ 2 * omStar (E := E) :=
     one_le_mul_of_one_le_of_one_le (one_le_pow₀ hd1) hom
   have h2 := mul_self_lt_mul_self hL0 hlt
   have hth : X.la1 ^ 2 < 1 := by
-    nlinarith [hC1, hZ, h2, mul_nonneg (sub_nonneg.mpr hZ) (lt_of_le_of_lt (mul_self_nonneg X.la1) h2).le]
+    linarith [hC1, hZ, h2, mul_nonneg (sub_nonneg.mpr hZ) (lt_of_le_of_lt (mul_self_nonneg X.la1) h2).le]
   have hK1 : 1 ≤ P.ka0 * P.ph := by
     unfold Par.ka0 Par.ph PT.ph RR
     rw [if_pos hlt]
@@ -383,10 +387,10 @@ theorem tof_inv_sqrt_le [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) (hph 
     set Y : ℝ := 2 * (PT.f E : ℝ) / (PT.rd E ^ 2 * X.la1 ^ 2) with hYd
     have hY0 : 0 < Y := hph2
     have h5 : 2 * (PT.f E : ℝ) ≤ Y * PT.rd E ^ 2 := by
-      nlinarith [mul_nonneg (sub_nonneg.mpr hth.le) (mul_pos hY0 (pow_pos hR0 2)).le]
+      linarith [mul_nonneg (sub_nonneg.mpr hth.le) (mul_pos hY0 (pow_pos hR0 2)).le]
     have h6 : (1 : ℝ) ≤ PT.rd E ^ 5 * ((dstar (E := E) P.m : ℕ) : ℝ) ^ 2 :=
       one_le_mul_of_one_le_of_one_le (one_le_pow₀ (by linarith)) (one_le_pow₀ hd1)
-    nlinarith [mul_le_mul h6 h5 (by positivity) (by linarith)]
+    linarith [mul_le_mul h6 h5 (by positivity) (by linarith)]
   set K : ℝ := P.ka0 * P.ph with hKd
   have hK0 : 0 ≤ K := by linarith
   have hsK : 1 ≤ √K := by
@@ -416,7 +420,7 @@ theorem tof_inv_sqrt_le [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) (hph 
     have hnd : (n : ℝ) ≤ ((dstar (E := E) P.m : ℕ) : ℝ) := by exact_mod_cast hn
     have hn0 : (0 : ℝ) ≤ n := Nat.cast_nonneg n
     push_cast
-    nlinarith [mul_le_mul_of_nonneg_right hl2 hn0]
+    linarith [mul_le_mul_of_nonneg_right hl2 hn0]
   have hc2 : 0 < c * (2 : ℝ) ^ (-(n : ℝ) / 2) := mul_pos hc (Real.rpow_pos_of_pos (by norm_num) _)
   have hA : 0 < √(c * (2 : ℝ) ^ (-(n : ℝ) / 2)) := Real.sqrt_pos.mpr hc2
   rw [div_le_iff₀ hA]
@@ -431,7 +435,8 @@ theorem tof_inv_sqrt_le [IsCMField E] {X : PT E} {DF : ℕ} (P : Par X DF) (hph 
     ring
   have hge := one_le_mul_of_one_le_of_one_le hcK hE
   rw [← hsq] at hge
-  nlinarith [hge, hx0]
+  have h1le := Real.sqrt_le_sqrt hge
+  rwa [Real.sqrt_one, Real.sqrt_sq hx0] at h1le
 
 end
 
@@ -1259,9 +1264,16 @@ theorem tof_yb_sup [IsCMField E] {X : PT E} {DF : ℕ} {P : Par X DF} {I : Submo
         have hsq := Real.sqrt_nonneg (P.q : ℝ)
         have h1 : 1 ≤ Real.sqrt P.q * Y.la1 :=
           le_trans hqth (mul_le_mul_of_nonneg_left hla hsq)
-        have h2 : 1 ≤ Real.sqrt (((1 : ℕ) : ℝ) * Real.pi) * (Real.sqrt P.q * Y.la1) := by
-          nlinarith
-        nlinarith
+        have h2 : 1 ≤ Real.sqrt (((1 : ℕ) : ℝ) * Real.pi) * (Real.sqrt P.q * Y.la1) :=
+          one_le_mul_of_one_le_of_one_le hpi h1
+        calc 4 * Real.sqrt (2 * ((Col.gB (IR I)) : ℝ))
+            ≤ 4 * (Real.sqrt 2 * Real.sqrt g) := mul_le_mul_of_nonneg_left hgb' (by norm_num)
+          _ ≤ 4 * (1.5 * Real.sqrt g) :=
+              mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_right hs2 hsg.le) (by norm_num)
+          _ = 6 * Real.sqrt g * 1 := by ring
+          _ ≤ 6 * Real.sqrt g * (Real.sqrt (((1 : ℕ) : ℝ) * Real.pi) * (Real.sqrt P.q * Y.la1)) :=
+              mul_le_mul_of_nonneg_left h2 (by positivity)
+          _ = 6 * (Real.sqrt g * Real.sqrt P.q) * (Real.sqrt (((1 : ℕ) : ℝ) * Real.pi) * Y.la1) := by ring
       rw [hy]; linarith
   have hB : 2 * ((1 : ℕ) : ℝ) ^ (Col.gB (IR I)) * (1 + 4 * Real.sqrt (2 * (Col.gB (IR I))) /
       (Real.sqrt (((1 : ℕ) : ℝ) * Real.pi) * Y.la1)) ^ (2 * (Col.gB (IR I))) ≤ Real.exp P.p1 ^ 2 := by

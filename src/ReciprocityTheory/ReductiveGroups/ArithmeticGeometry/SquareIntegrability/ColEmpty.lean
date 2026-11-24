@@ -200,7 +200,7 @@ theorem cab_core (hP : Ext.PackingCount) (hGT : Ext.GaussianTailBound) (hA : Pro
   have hGle' : (Col.gB (IR I) : ℝ) ≤ X.gA := by exact_mod_cast hGle
   have hcD : (c : ℝ) ≤ DF := by exact_mod_cast hc
   have h90 : 90 * ((Fintype.card (Fin (Col.gB (IR I))) : ℝ) + c) ≤ |P.R0| ^ 2 := by
-    rw [sq_abs, Fintype.card_fin]; nlinarith [hR0sq.2]
+    rw [sq_abs, Fintype.card_fin]; linarith [hR0sq.2]
   obtain ⟨β, hβ, hjet, hl2⟩ := hA (Fin (Col.gB (IR I))) (Col.YB hI hP P.q) P.q c |P.R0| P.hq (Col.YB_coc hI hP P.q) hR0pos hlat
     (by rw [sq_abs]; exact hR0sq.1) h90 (cabPoly η c) (cabPoly_deg η c)
   have hJ := cab_J_le η hη1 c P.q P.hq
@@ -270,11 +270,11 @@ theorem cab_core (hP : Ext.PackingCount) (hGT : Ext.GaussianTailBound) (hA : Pro
   · have h4 := Col.l2_colS_le_four_mul hI hP hGT hβ hB0 hBβ
     have hJ1 := cab_J_one P (G := Col.gB (IR I)) hc
     have hl2Y : (Col.YB hI hP P.q).l2 P.q β ≤ 6 := by
-      have := hl2'; rw [Fintype.card_fin] at this; nlinarith
+      have := hl2'; rw [Fintype.card_fin] at this; linarith
     have hK6 := twentyfour_le_constant P
     have hf1 : (1 : ℝ) ≤ (c.factorial : ℝ) ^ 2 := by
       have : (1 : ℝ) ≤ c.factorial := by exact_mod_cast Nat.one_le_iff_ne_zero.mpr (Nat.factorial_ne_zero c)
-      nlinarith
+      exact one_le_pow₀ this
     have hK6p : 0 < P.K6 := by linarith
     rw [inv_mul_le_iff₀ hK6p]
     have : P.K6 ≤ P.K6 * (c.factorial : ℝ) ^ 2 := le_mul_of_one_le_right hK6p.le hf1
@@ -578,7 +578,7 @@ theorem ct_expo_vec {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
     mul_le_mul_of_nonneg_left h3 Real.pi_pos.le
   have t4 : 0 ≤ Real.pi * q * ‖w‖ ^ 2 := by positivity
   rw [e1]
-  nlinarith [t1, t2, t3, t4]
+  linarith [t1, t2, t3, t4]
 
 variable {E : Type} [Field E] [NumberField E] [IsCMField E] {X : PT E} {DF : ℕ} {P : Par X DF}
   {I : Submodule ℤ (Vsp X.dim)}
@@ -604,7 +604,7 @@ theorem ct_beta (hA : PropAStatement) (hS : GSupStatement) (hI : IsSplit P I) (h
   have hGle' : (Col.gB (IR I) : ℝ) ≤ X.gA := by exact_mod_cast hGle
   have hcD : (c : ℝ) ≤ DF := by exact_mod_cast hc
   have h90 : 90 * ((Fintype.card (Fin (Col.gB (IR I))) : ℝ) + c) ≤ |P.R0| ^ 2 := by
-    rw [sq_abs, Fintype.card_fin]; nlinarith [hR0sq.2]
+    rw [sq_abs, Fintype.card_fin]; linarith [hR0sq.2]
   obtain ⟨β, hβ, hjet, hl2⟩ := hA (Fin (Col.gB (IR I))) (ctY (Col.YB hI hP P.q) w) P.q c |P.R0| P.hq
     (ctY_coc _ _ _ (Col.YB_coc hI hP P.q)) hR0pos hlat
     (by rw [sq_abs]; exact hR0sq.1) h90 (cabPoly 0 0) (by rw [ct_cabPoly_zero]; simp)
@@ -758,11 +758,16 @@ theorem ct_expo_num (q c : ℕ) (hq : 1 ≤ q) {U y M1 r : ℝ} (hU : 0 ≤ U) (
   have hX0 : 0 ≤ q * r ^ 2 := by positivity
   have hXa : q * r ^ 2 ≤ (r * Real.sqrt (q * (c + 1))) / 5 := by
     have h2 : (q * r ^ 2) * (c + 1) ≤ (r * Real.sqrt (q * (c + 1))) / 5 * (c + 1) := by
-      rw [hX]; nlinarith
+      rw [hX]
+      have := mul_le_mul_of_nonneg_left ha ha0
+      linarith [show (r * Real.sqrt (q * (c + 1))) ^ 2 = (r * Real.sqrt (q * (c + 1))) * (r * Real.sqrt (q * (c + 1))) by ring,
+        show (r * Real.sqrt (q * (c + 1))) / 5 * (c + 1) = (r * Real.sqrt (q * (c + 1))) * (c / 5) + (r * Real.sqrt (q * (c + 1))) / 5 by ring]
     exact le_of_mul_le_mul_right h2 (by positivity)
   have ht0 : 0 ≤ q * y ^ 2 := by positivity
   have hP : 2 * (r * q * y) ≤ 20 * (q * r ^ 2) + (q * y ^ 2) / 20 := by
-    nlinarith [sq_nonneg (20 * (q * r ^ 2) - (q * y ^ 2) / 20)]
+    have hsq : 0 ≤ (q : ℝ) / 20 * (20 * r - y) ^ 2 := mul_nonneg (by positivity) (sq_nonneg _)
+    have heq : 20 * ((q : ℝ) * r ^ 2) + (q : ℝ) * y ^ 2 / 20 - 2 * (r * q * y) = (q : ℝ) / 20 * (20 * r - y) ^ 2 := by ring
+    linarith
   have F1 : π * (q * r ^ 2) ≤ 3.15 * (q * r ^ 2) := mul_le_mul_of_nonneg_right hπ2.le hX0
   have F2 : π * (2 * (r * q * y)) ≤ π * (20 * (q * r ^ 2) + (q * y ^ 2) / 20) :=
     mul_le_mul_of_nonneg_left hP Real.pi_pos.le
@@ -771,7 +776,7 @@ theorem ct_expo_num (q c : ℕ) (hq : 1 ≤ q) {U y M1 r : ℝ} (hU : 0 ≤ U) (
   have F4 : π * (q / 2) * y ^ 2 ≤ π * (q - M1) * y ^ 2 := by
     have : (q : ℝ) / 2 ≤ q - M1 := by linarith
     have := mul_le_mul_of_nonneg_left this Real.pi_pos.le
-    nlinarith
+    exact mul_le_mul_of_nonneg_right this (sq_nonneg y)
   linarith [F1, F2, F3, F3', F4, h1, hXa, ha, ht, hA]
 
 theorem ct_base_num (q c : ℕ) (hq : 1 ≤ q) {t0 : ℝ}
@@ -784,7 +789,7 @@ theorem ct_base_num (q c : ℕ) (hq : 1 ≤ q) {t0 : ℝ}
     exact Real.one_le_exp (by linarith)
   have hq1 : (1 : ℝ) ≤ q := by exact_mod_cast hq
   have hc1 : (1 : ℝ) ≤ c := by exact_mod_cast hc
-  have hqc1 : (1 : ℝ) ≤ q * c := by nlinarith
+  have hqc1 : (1 : ℝ) ≤ q * c := one_le_mul_of_one_le_of_one_le hq1 hc1
   have hL0 : 0 ≤ Real.log (q * c) := Real.log_nonneg hqc1
   have hS : 0 < Real.sqrt (q * (c + 1)) := Real.sqrt_pos.mpr (by positivity)
   have hB : 0 < 6.5 * Real.exp 1.07 * Real.sqrt (q * (c + 1)) := by positivity
@@ -800,7 +805,8 @@ theorem ct_base_num (q c : ℕ) (hq : 1 ≤ q) {t0 : ℝ}
   have h2 := Real.log_two_lt_d9
   have hqc : Real.log (q * (c + 1)) ≤ Real.log 2 + Real.log (q * c) := by
     rw [← Real.log_mul (by norm_num) (by positivity)]
-    exact Real.log_le_log (by positivity) (by nlinarith)
+    exact Real.log_le_log (by positivity)
+      (by have := mul_le_mul_of_nonneg_left (show (c : ℝ) + 1 ≤ 2 * c by linarith) (by linarith : (0 : ℝ) ≤ q); linarith)
   have key : Real.log (6.5 * Real.exp 1.07 * Real.sqrt (q * (c + 1))) ≤
       0.56 * (7 + Real.log (q * c)) := by
     rw [hlogB]; linarith
@@ -847,9 +853,12 @@ theorem jet_product_le (q c dK gA dst : ℕ) (hq : 1 ≤ q) {n U t0 Bsq : ℝ} (
         (Real.sqrt Bsq * Real.exp (1.07 * c) * (2 * 3 ^ dK * Real.exp (-(1.33 * t0)))) ≤
       7 * 2 ^ gA * (4.3 : ℝ) ^ dst * Real.exp (-t0) * n ^ c := by
   have hq1 : (1 : ℝ) ≤ q := by exact_mod_cast hq
-  have hS1 : 1 ≤ Real.sqrt (q * (c + 1)) := Real.one_le_sqrt.mpr (by nlinarith)
+  have hS1 : 1 ≤ Real.sqrt (q * (c + 1)) :=
+    Real.one_le_sqrt.mpr (one_le_mul_of_one_le_of_one_le hq1 (by linarith [Nat.cast_nonneg (α := ℝ) c]))
   have hbase : 2 * π * U + 5 * Real.sqrt (q * (c + 1)) ≤ 6.5 * Real.sqrt (q * (c + 1)) * n := by
-    nlinarith
+    have h1 := mul_le_mul_of_nonneg_left hn (show (0 : ℝ) ≤ Real.sqrt (q * (c + 1)) by linarith)
+    have h2 := mul_le_mul_of_nonneg_right hS1 (by linarith : (0 : ℝ) ≤ n)
+    linarith
   have hpow : (2 * π * U + 5 * Real.sqrt (q * (c + 1))) ^ c ≤
       (6.5 * Real.exp 1.07 * Real.sqrt (q * (c + 1))) ^ c * Real.exp (-(1.07 * c)) * n ^ c := by
     have e : (6.5 * Real.exp 1.07 * Real.sqrt (q * (c + 1))) ^ c * Real.exp (-(1.07 * c)) =
@@ -904,11 +913,11 @@ theorem ct_28 (P : Par X DF) {c : ℕ} (hc : c ≤ DF) : 28 * (c : ℝ) ≤ t0 (
   have h5 := P.C5
   have hq : (1 : ℝ) ≤ P.q := by exact_mod_cast P.hq
   have hDF : (1 : ℝ) ≤ DF := by exact_mod_cast P.hDF
-  have hlog : 0 ≤ Real.log ((P.q : ℝ) * DF) := Real.log_nonneg (by nlinarith)
+  have hlog : 0 ≤ Real.log ((P.q : ℝ) * DF) := Real.log_nonneg (one_le_mul_of_one_le_of_one_le hq hDF)
   have hcDF : (c : ℝ) ≤ DF := by exact_mod_cast hc
   have hd : (0:ℝ) ≤ dstar (E := E) P.m := Nat.cast_nonneg _
   have hm : 0 ≤ 4 * (DF : ℝ) * Real.log ((P.q : ℝ) * DF) := mul_nonneg (by linarith) hlog
-  nlinarith
+  linarith
 
 theorem ct_tail (hI : IsSplit P I) (hP : Ext.PackingCount) (hGT : Ext.GaussianTailBound)
     {β : EuclideanSpace ℂ (Fin (Col.gB (IR I))) → ℂ} (hβ : β ∈ (Col.YB hI hP P.q).Sec P.q)
@@ -978,7 +987,8 @@ theorem ct_tail (hI : IsSplit P I) (hP : Ext.PackingCount) (hGT : Ext.GaussianTa
     have h28 := ct_28 P hc
     have ht : 28 * (c : ℝ) ≤ q * ‖y‖ ^ 2 := by
       have : t0 (E := E) P.q P.R0 = q * b0 (E := E) P.q P.R0 := rfl
-      nlinarith
+      have h1 := mul_le_mul_of_nonneg_left hsep (Nat.cast_nonneg (α := ℝ) q)
+      linarith
     have hv2 := ct_expo_num q c P.hq (U := ‖u‖) (y := ‖y‖) (norm_nonneg _) (norm_nonneg _) P.C3 hr0 hr ht
     have hvv : q * Real.pi * ‖v‖ ^ 2 / 2 ≤ q * Real.pi * r ^ 2 / 2 := by
       have : ‖v‖ ^ 2 ≤ r ^ 2 := pow_le_pow_left₀ (norm_nonneg _) hv 2
@@ -992,7 +1002,7 @@ theorem ct_tail (hI : IsSplit P I) (hP : Ext.PackingCount) (hGT : Ext.GaussianTa
       rw [hn]
       have e1 : 2 * Real.pi * r * (q * ‖ua‖ + q * ‖y‖) = 2 * Real.pi * r * (‖u‖ + q * ‖y‖) := by
         rw [hnua]
-      nlinarith
+      linarith
     calc ‖K * Col.Tc X I q β (x : Col.Qc X I) (v - a)‖
         = ‖K‖ * ‖Col.Tc X I q β (x : Col.Qc X I) (v - a)‖ := norm_mul _ _
       _ ≤ ‖K‖ * (B * Real.exp (q * Real.pi * ‖v - a‖ ^ 2 / 2) *
@@ -1206,7 +1216,8 @@ theorem ct_core (hP : Ext.PackingCount) (hGT : Ext.GaussianTailBound) (hA : Prop
       show -(2 * Real.pi * ‖u‖ ^ 2 / q) + 2 * Real.pi * ‖u‖ ^ 2 / q = 0 by ring, Real.exp_zero,
       mul_one]
     rw [inv_mul_le_iff₀ hK6p]
-    nlinarith
+    have := le_mul_of_one_le_right hK6p.le hn1
+    linarith
 
 end
 

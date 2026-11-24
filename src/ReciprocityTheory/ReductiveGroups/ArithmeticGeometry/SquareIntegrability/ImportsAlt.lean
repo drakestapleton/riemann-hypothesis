@@ -134,10 +134,10 @@ theorem greedy_step (X : PT E) {n : ℕ} (ω : Fin n → 𝓞 E) {Ω th : ℝ} (
       have h5 : ‖ux‖ ^ 2 ≤ ‖r‖ * ‖ux‖ := by
         rw [h2, h3]
         exact le_trans (le_abs_self _) h4
-      have h6 : ‖ux‖ < th := by nlinarith
+      have h6 : ‖ux‖ < th := lt_of_le_of_lt (le_of_mul_le_mul_right (by rw [← sq]; exact h5) hpos) hrn
       have h7 : 1 / (Ω * th) < th := lt_trans h1 h6
       rw [div_lt_iff₀ hΩθ] at h7
-      nlinarith
+      linarith [show th * (Ω * th) = Ω * th ^ 2 by ring]
     exact Hf_im_span_right (I : Set (Vsp X.dim)) x (hux.eq_zero_iff.mp hux0)
   have hrIR : ∀ a ∈ IR I, (Hf r a).im = 0 := by
     intro a ha
@@ -158,9 +158,11 @@ theorem greedy_step (X : PT E) {n : ℕ} (ω : Fin n → 𝓞 E) {Ω th : ℝ} (
       have h2 : ‖act (ω j) r‖ ≤ Ω * ‖r‖ := by
         rw [act_eq_actE]
         exact norm_actE_le _ Ω hΩ.le (hω j) r
-      have h3 : ‖r‖ * ‖act (ω j) r‖ ≤ Ω * ‖r‖ ^ 2 := by nlinarith [norm_nonneg r]
-      have h4 : ‖r‖ ^ 2 < th ^ 2 := by nlinarith [norm_nonneg r]
-      have h5 : Ω * ‖r‖ ^ 2 < 1 := by nlinarith
+      have h3 : ‖r‖ * ‖act (ω j) r‖ ≤ Ω * ‖r‖ ^ 2 := by
+        have := mul_le_mul_of_nonneg_left h2 (norm_nonneg r)
+        linarith [show ‖r‖ * (Ω * ‖r‖) = Ω * ‖r‖ ^ 2 by ring]
+      have h4 : ‖r‖ ^ 2 < th ^ 2 := pow_lt_pow_left₀ hrn (norm_nonneg r) two_ne_zero
+      have h5 : Ω * ‖r‖ ^ 2 < 1 := (mul_lt_mul_of_pos_left h4 hΩ).trans_le hΩth
       linarith
     rw [hxpr, act_add', Hf_im_add_left, Hf_im_add_right, Hf_im_add_right, e1, e2, e3]
     simpa using e4
@@ -246,7 +248,7 @@ theorem greedy_step (X : PT E) {n : ℕ} (ω : Fin n → 𝓞 E) {Ω th : ℝ} (
         have h1 := Hf_im_span_right S y hyS u huIR
         have h2 := hinner u huIR
         rw [h1, real_inner_self_eq_norm_sq] at h2
-        exact norm_eq_zero.mp (by nlinarith [norm_nonneg u])
+        exact norm_eq_zero.mp (sq_eq_zero_iff.mp h2)
       obtain ⟨j, hj⟩ := hex
       have h1 := one_le_abs_im X hy (X.stable (ω j) x hx) hj
       have h2 : (Hf y (act (ω j) x)).im = inner ℝ u (act (ω j) r) := by
@@ -268,7 +270,7 @@ theorem greedy_step (X : PT E) {n : ℕ} (ω : Fin n → 𝓞 E) {Ω th : ℝ} (
         rw [hinner uI (hIJ huI.1), ← huI.2 uI huI.1, real_inner_self_eq_norm_sq]
       have h3 : inner ℝ u uI ≤ ‖u‖ * ‖uI‖ := real_inner_le_norm u uI
       have hpos : 0 < ‖uI‖ := norm_pos_iff.mpr huI0
-      have h4 : ‖uI‖ ≤ ‖u‖ := by nlinarith
+      have h4 : ‖uI‖ ≤ ‖u‖ := le_of_mul_le_mul_right (by rw [← sq, h2]; exact h3) hpos
       linarith
   · apply Submodule.finrank_lt_finrank_of_lt
     rw [hIRJ]
@@ -793,7 +795,7 @@ theorem exists_short_vectors_realSpan (X : PT E) (I : Submodule ℤ (Vsp X.dim))
         ((Set.Finite.mem_toFinset hsfin).2 has)
       linarith
     rw [← hnormE z, div_le_iff₀ hApos]
-    nlinarith [norm_nonneg u]
+    exact h1.trans (h2.trans (mul_le_mul_of_nonneg_left h3 (norm_nonneg u)))
   have hdisc : DiscreteTopology M := by
     rw [discreteTopology_iff_isOpen_singleton_zero, Metric.isOpen_singleton_iff]
     refine ⟨1 / A, by positivity, fun z hz => ?_⟩
@@ -833,7 +835,7 @@ theorem exists_short_vectors_realSpan (X : PT E) (I : Submodule ℤ (Vsp X.dim))
         _ ≤ t := hvt 0
   have hlam : PI.succMin M N ≤ N / X.la1 := by
     rw [le_div_iff₀ hla]
-    nlinarith
+    exact (mul_le_mul_of_nonneg_left hdual1 hsm0).trans hT
 
   have hne : {t : ℝ | 0 ≤ t ∧ ∃ v : Fin N → EuclideanSpace ℝ (Fin N),
       (∀ j, v j ∈ M) ∧ LinearIndependent ℝ v ∧ ∀ j, ‖v j‖ ≤ t}.Nonempty := by
@@ -1287,7 +1289,8 @@ theorem cs_bound [IsCMField E] (I : Submodule ℤ (Vsp dim))
         rw [← mul_pow]
         exact pow_le_pow_left₀ hS0 hcs 2
       rw [hbb] at h3
-      nlinarith
+      exact le_of_mul_le_mul_left
+        (by linarith [show S * (2 * S) = 2 * S ^ 2 by ring, show S * ‖u‖ ^ 2 = 2 * (‖u‖ ^ 2 * (S / 2)) by ring]) hpos
     · rw [← hzero]
       have := sq_nonneg ‖u‖
       linarith
@@ -1316,7 +1319,8 @@ theorem cs_bound [IsCMField E] (I : Submodule ℤ (Vsp dim))
         exact div_le_div_of_nonneg_left (by positivity) hn (nS_le ξ σ)
     rw [← Finset.sum_div] at hlow
     have := (div_le_iff₀ hpos).1 hlow
-    nlinarith
+    have hmul := mul_le_mul_of_nonneg_right hS2 hpos.le
+    linarith
 
 end CS
 
@@ -1641,9 +1645,12 @@ theorem sq_le_pow_four_div_sq {d N la u : ℝ} (hd : 2 ≤ d) (hN : N ≤ d) (hl
       _ = N + 1 := e2
   have hla2 : 0 < la ^ 2 := by positivity
   rw [le_div_iff₀ hla2]
-  have h2 : u * la ≤ d ^ 2 := by nlinarith
+  have h2 : u * la ≤ d ^ 2 := by
+    have : 2 * d ≤ d ^ 2 := by rw [sq]; exact mul_le_mul_of_nonneg_right hd (by linarith)
+    linarith
   have h3 : 0 ≤ u * la := mul_nonneg hu0 hla.le
-  nlinarith [mul_le_mul h2 h2 h3 (by positivity : (0:ℝ) ≤ d ^ 2)]
+  have := mul_le_mul h2 h2 h3 (by positivity : (0 : ℝ) ≤ d ^ 2)
+  linarith [show u * la * (u * la) = u ^ 2 * la ^ 2 by ring, show d ^ 2 * d ^ 2 = d ^ 4 by ring]
 
 theorem split_pos (X : PT E) {DF : ℕ} (P : Par X DF) (h : X.la1 < P.th) : ∃ I, IsSplit P I := by
   obtain ⟨n, ω, hω, hsp⟩ := omega_exists' (E := E)
@@ -1664,10 +1671,13 @@ theorem split_pos (X : PT E) {DF : ℕ} (P : Par X DF) (h : X.la1 < P.th) : ∃ 
   have hth : 0 < P.th := by
     rw [Par.th, th]; apply Real.sqrt_pos.2; positivity
   have hd2n : 2 ≤ dstar (E := E) P.m := by
-    rw [dstar]; have := P.hm1; nlinarith
+    rw [dstar]; exact (Nat.mul_le_mul_left 2 (Nat.mul_pos hf1n P.hm1)).trans_eq (Nat.mul_assoc 2 (PT.f E) P.m).symm
   have hd2 : (2 : ℝ) ≤ dstar (E := E) P.m := by exact_mod_cast hd2n
   have hC1 : (dstar (E := E) P.m : ℝ) ^ 2 * Ω * P.th ^ 2 < 1 := P.C1
-  have hΩth : Ω * P.th ^ 2 ≤ 1 := by nlinarith [sq_nonneg P.th, hΩ]
+  have hΩth : Ω * P.th ^ 2 ≤ 1 := by
+    have hd1 : (1 : ℝ) ≤ (dstar (E := E) P.m : ℝ) ^ 2 := one_le_pow₀ (by linarith)
+    have := mul_le_mul_of_nonneg_right hd1 (mul_nonneg hΩ.le (sq_nonneg P.th))
+    linarith [show (dstar (E := E) P.m : ℝ) ^ 2 * (Ω * P.th ^ 2) = (dstar (E := E) P.m : ℝ) ^ 2 * Ω * P.th ^ 2 by ring]
   obtain ⟨I, hI, hmax⟩ := exists_maximal X ω hΩ hth hΩth hω hsp
   obtain ⟨τ, hτ⟩ := P.hm
   have hr : 1 ≤ X.r := by
@@ -1710,11 +1720,14 @@ theorem split_pos (X : PT E) {DF : ℕ} (P : Par X DF) (h : X.la1 < P.th) : ∃ 
     have hb : b0 (E := E) P.q P.R0 * (Ω ^ 2 * P.th ^ 2) ≤ 1 := by
       rw [key, div_le_one hRR, RR]
       have : 4 * PT.rd E ^ 4 ≤ PT.rd E ^ 7 := by
-        have h3 : (4 : ℝ) ≤ PT.rd E ^ 3 := by nlinarith
+        have h3 : (4 : ℝ) ≤ PT.rd E ^ 3 := by
+          have := le_self_pow₀ (by linarith : (1 : ℝ) ≤ PT.rd E) (show 3 ≠ 0 by norm_num)
+          linarith
         calc 4 * PT.rd E ^ 4 ≤ PT.rd E ^ 3 * PT.rd E ^ 4 :=
               mul_le_mul_of_nonneg_right h3 (by positivity)
           _ = PT.rd E ^ 7 := by ring
-      nlinarith [pow_pos (show (0:ℝ) < PT.rd E by linarith) 2]
+      have := mul_le_mul_of_nonneg_right hf4 (sq_nonneg (PT.rd E))
+      linarith [show (PT.rd E) ^ 2 * (PT.rd E) ^ 2 = (PT.rd E) ^ 4 by ring]
     have hb' : b0 (E := E) P.q P.R0 ≤ (1 / (Ω * P.th)) ^ 2 := by
       rw [div_pow, one_pow, mul_pow, le_div_iff₀ (by positivity)]
       exact hb
