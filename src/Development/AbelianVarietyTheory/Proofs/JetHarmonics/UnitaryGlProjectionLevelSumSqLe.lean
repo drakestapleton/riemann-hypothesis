@@ -363,7 +363,7 @@ theorem _root_.GlobalTheory.norm_sum_eigenprojector_le_of_resolvent_bound :
     rfl
   rw [hS]
   have hpi : 0 < 2 * Real.pi := by positivity
-  nlinarith [hbound]
+  exact le_of_mul_le_mul_left (hbound.trans_eq (by ring)) hpi
 
 end GlobalTheory
 end -- clump:auto
@@ -386,14 +386,16 @@ theorem splitCasRes_norm_sq_le_weighted {M : Type} [NormedAddCommGroup M] (u v :
     calc ‖u‖ = ‖(u + v) - v‖ := by rw [add_sub_cancel_right]
       _ ≤ ‖u + v‖ + ‖v‖ := norm_sub_le _ _
   have hsq : ‖u‖ ^ 2 ≤ (‖u + v‖ + ‖v‖) ^ 2 := by gcongr
-  nlinarith [sq_nonneg (2 * ‖u + v‖ - 13 * ‖v‖)]
+  have e1 : (‖u + v‖ + ‖v‖) ^ 2 + 1 / 26 * (2 * ‖u + v‖ - 13 * ‖v‖) ^ 2 = 15 / 13 * ‖u + v‖ ^ 2 + 15 / 2 * ‖v‖ ^ 2 := by ring
+  linarith [sq_nonneg (2 * ‖u + v‖ - 13 * ‖v‖)]
 
 theorem splitCasRes_norm_add_sq_le {M : Type} [NormedAddCommGroup M] (u v : M) :
     ‖u + v‖ ^ 2 ≤ 2 * ‖u‖ ^ 2 + 2 * ‖v‖ ^ 2 := by
   have hsq : ‖u + v‖ ^ 2 ≤ (‖u‖ + ‖v‖) ^ 2 := by
     gcongr
     exact norm_add_le u v
-  nlinarith [sq_nonneg (‖u‖ - ‖v‖)]
+  have e1 : (‖u‖ + ‖v‖) ^ 2 + (‖u‖ - ‖v‖) ^ 2 = 2 * ‖u‖ ^ 2 + 2 * ‖v‖ ^ 2 := by ring
+  linarith [sq_nonneg (‖u‖ - ‖v‖)]
 
 theorem splitCasRes_circle_dist (b t : ℝ) (ζ : ℂ) (hζ : ‖ζ + ((b / 16 : ℝ) : ℂ)‖ = 9 * b / 16)
     (ht : (-b / 8 - b / 32 ≤ -t ∧ -t ≤ b / 32) ∨ b - b / 32 ≤ -t) :
@@ -456,10 +458,12 @@ theorem splitCas_resolvent_bounds : ∀ (M : Type) [NormedAddCommGroup M] [Inner
         rw [hsplit]
         abel
       rw [he]
-      nlinarith [hlow b]
+      linarith [hlow b]
     have hsum := Finset.sum_le_sum (fun b (_ : b ∈ (univ : Finset (Fin n))) => hper b)
     rw [Finset.sum_sub_distrib, ← Finset.mul_sum, ← Finset.mul_sum] at hsum
-    nlinarith [hoff, hsum, mul_nonneg (sq_nonneg bv) hS]
+    have e1 : 13 / 15 * (15 * bv / 32) ^ 2 * ∑ c, ‖x c‖ ^ 2 - 13 / 2 * ((bv / 16) ^ 2 * ∑ c, ‖x c‖ ^ 2) =
+        (13 * bv / 32) ^ 2 * ∑ c, ‖x c‖ ^ 2 := by ring
+    linarith [hoff, hsum]
   · have hD : ∀ b, ‖E b b (x b)‖ ^ 2 ≤ (65 * bv / 32) ^ 2 * ‖x b‖ ^ 2 := by
       intro b
       refine (hdiag b).2.2 b (65 * bv / 32) ?_
@@ -476,10 +480,13 @@ theorem splitCas_resolvent_bounds : ∀ (M : Type) [NormedAddCommGroup M] [Inner
       intro b
       rw [hsplit, norm_neg]
       have ha := splitCasRes_norm_add_sq_le (E b b (x b)) (∑ c ∈ univ.erase b, E b c (x c))
-      nlinarith [hD b]
+      linarith [hD b]
     have hsum := Finset.sum_le_sum (fun b (_ : b ∈ (univ : Finset (Fin n))) => hper b)
     rw [Finset.sum_add_distrib, ← Finset.mul_sum, ← Finset.mul_sum] at hsum
-    nlinarith [hoff, hsum, mul_nonneg (sq_nonneg bv) hS]
+    have e1 : (3 * bv) ^ 2 * ∑ c, ‖x c‖ ^ 2 -
+        (2 * (65 * bv / 32) ^ 2 * ∑ c, ‖x c‖ ^ 2 + 2 * ((bv / 16) ^ 2 * ∑ c, ‖x c‖ ^ 2)) =
+        379 / 512 * (bv ^ 2 * ∑ c, ‖x c‖ ^ 2) := by ring
+    linarith [hoff, hsum, mul_nonneg (sq_nonneg bv) hS]
 
 end GlobalTheory
 end -- clump:auto
@@ -750,7 +757,9 @@ theorem hhJ_nonneg_of_cloud_eigen : ∀ (M : Type) [NormedAddCommGroup M] [Inner
   have hkey : 0 ≤ (15 * bv / 16) ^ 2 * (hhJ ε x x).re := by
     unfold hhJ
     have : 0 ≤ bv ^ 2 * ∑ c, ‖x c‖ ^ 2 := mul_nonneg (sq_nonneg _) hS0
-    nlinarith
+    have e1 : (15 * bv / 16) ^ 2 * ∑ c, ‖x c‖ ^ 2 - 2 * ((bv / 16) ^ 2 * ∑ c, ‖x c‖ ^ 2) =
+        223 / 256 * (bv ^ 2 * ∑ c, ‖x c‖ ^ 2) := by ring
+    linarith
   exact (mul_nonneg_iff_of_pos_left hpos).mp hkey
 
 end GlobalTheory
@@ -854,7 +863,7 @@ theorem sum_normSq_proj_single_le : ∀ (M : Type) [NormedAddCommGroup M] [Inner
   have hnb : (n : ℝ) ≤ bv := by
     have h7 : (n : ℝ) ≤ (n : ℝ) ^ 7 := le_self_pow₀ hn1 (by norm_num)
     have : (0 : ℝ) ≤ (n : ℝ) ^ 7 := by positivity
-    nlinarith
+    linarith
   obtain ⟨hcard, harith⟩ := GlobalTheory.card_filter_le_succ_and_sq_sum_le_pow n kk bv h1 h2 hnb
   have hcompl : (univ.filter (fun a : Fin n => a.val + 1 < kk))ᶜ =
       univ.filter (fun a : Fin n => kk ≤ a.val + 1) := by
@@ -917,7 +926,10 @@ theorem nsq_rhoC_le {n : ℕ} (ε : Fin n → Bool) : nsq (rhoC ε) ≤ (n : ℝ
     intro a _
     have := rhoC_bd ε a
     have hn : (0 : ℝ) ≤ n := Nat.cast_nonneg n
-    nlinarith [this.1, this.2]
+    have h1 : |rhoC ε a| ≤ (n : ℝ) / 2 := abs_le.mpr this
+    have h2 : |rhoC ε a| ^ 2 ≤ ((n : ℝ) / 2) ^ 2 := pow_le_pow_left₀ (abs_nonneg _) h1 2
+    rw [sq_abs, sq] at h2
+    linarith [sq_nonneg (n : ℝ)]
   have := sum_le_card_nsmul _ _ _ h
   simp only [card_univ, Fintype.card_fin, nsmul_eq_mul] at this
   calc _ ≤ (n : ℝ) * (n : ℝ) ^ 2 := this
@@ -934,7 +946,8 @@ theorem sqrt_step {X Y b : ℝ} (hb : 4 ≤ b) (hX : (b / 2) ^ 2 ≤ X) (hY : X 
   have h2 : Real.sqrt X ^ 2 = X := Real.sq_sqrt h0
   have h3 : Real.sqrt X - 2 ≤ Real.sqrt Y := by
     apply Real.le_sqrt_of_sq_le
-    nlinarith
+    have e1 : (Real.sqrt X - 2) ^ 2 = Real.sqrt X ^ 2 - 4 * Real.sqrt X + 4 := by ring
+    linarith
   linarith
 
 end GlobalTheory.LowCasShift
@@ -980,13 +993,20 @@ theorem lowK_sub_single_and_sqrt_ckv_le :
     show μ l + rhoN ε l ≤ _
     linarith
   have hb4 : 4 ≤ bv := by linarith
-  have hbig : (9 / 10 * bv) ^ 2 ≤ (μ + rhoN ε) l * (μ + rhoN ε) l := by nlinarith
+  have hbig : (9 / 10 * bv) ^ 2 ≤ (μ + rhoN ε) l * (μ + rhoN ε) l := by
+    have h1 : 9 / 10 * bv ≤ -((μ + rhoN ε) l) := by linarith
+    have h2 : (9 / 10 * bv) ^ 2 ≤ (-((μ + rhoN ε) l)) ^ 2 := pow_le_pow_left₀ (by linarith) h1 2
+    rw [neg_sq] at h2
+    rwa [← sq]
   have hXl : (bv / 2) ^ 2 ≤ ckv ε (lowK ε μ) := by
-    rw [hX]; nlinarith
+    rw [hX]
+    have e1 : (9 / 10 * bv) ^ 2 - (bv / 2) ^ 2 = 14 / 25 * bv ^ 2 := by ring
+    have hbv2 : bv ≤ bv ^ 2 := le_self_pow₀ (by linarith) two_ne_zero
+    linarith
   have hstep := sqrt_step hb4 hXl (Y := ckv ε (lowK ε (μ - Pi.single s 1))) (by rw [hX, hY]; linarith)
   have hsn : Real.sqrt n ≤ n := by
     apply Real.sqrt_le_iff.mpr
-    constructor <;> nlinarith
+    exact ⟨by linarith, le_self_pow₀ hn1 two_ne_zero⟩
   linarith
 
 end GlobalTheory

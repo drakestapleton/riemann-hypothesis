@@ -248,7 +248,8 @@ theorem depth_le_over_level : (∀ (p : ℕ) [Fact p.Prime], Pdiv.ChartF.HTFSt p
   have hsp := GlobalTheory.LevelSplit.splitsIn_level_prime D i
   have hg' : (0 : ℝ) < D.host.g i' := by exact_mod_cast (D.host.g_prime i').pos
   have he : (0 : ℝ) < e := by exact_mod_cast ho.1
-  have hnr : 2 * D.R.r ≤ w.n := le_trans (by nlinarith) hn
+  have hnr : 2 * D.R.r ≤ w.n :=
+    le_trans (by have := Nat.mul_le_mul_right D.R.r (Nat.mul_le_mul_left 2 hf1); simpa using this) hn
   have hDM : (WeightAlgebra.DF w : ℝ) * M0 < D.host.g i' := by
     by_cases hlt : j < D.R.m
     · exact lt_of_le_of_lt (mul_le_mul_of_nonneg_left hM0 (Nat.cast_nonneg _)) (hc hlt i').1
@@ -457,7 +458,7 @@ theorem err_le (R N n Dg Φ φ c e g₀ g₁ : ℝ) (hR : 0 < R) (hN : 0 < N) (h
     (hg₁ : 1 ≤ g₁) (hΦ0 : 0 ≤ Φ) (hΦ : Φ ≤ e * (R * N ^ 3 * φ))
     (hc : R * (N ^ 4 * n + 2 * N ^ 3) * Dg ^ 2 / g₀ ≤ c) : Dg ^ 2 * Φ / (g₀ * g₁) / e ≤ c * φ := by
   have hφ : 0 ≤ φ := by
-    have h1 : 0 ≤ (e * (R * N ^ 3)) * φ := by nlinarith
+    have h1 : 0 ≤ (e * (R * N ^ 3)) * φ := by linarith [show e * (R * N ^ 3 * φ) = (e * (R * N ^ 3)) * φ by ring]
     exact nonneg_of_mul_nonneg_right h1 (by positivity)
   refine le_trans ?_ (mul_le_mul_of_nonneg_right hc hφ)
   calc Dg ^ 2 * Φ / (g₀ * g₁) / e ≤ Dg ^ 2 * (e * (R * N ^ 3 * φ)) / (g₀ * 1) / e := by gcongr
@@ -684,7 +685,8 @@ theorem lastPos_L_of_setC {D : D7} {B : WeightFamilies.Prov D} {P : ModuliIntegr
     have e3 : 40 * ((WeightFamilies.dimY D j : ℤ) + 2) ≤ T := by exact_mod_cast h40
     have e4 : (0 : ℤ) ≤ (WeightFamilies.dimY D j : ℤ) := Int.natCast_nonneg _
     push_cast
-    nlinarith
+    have hT2 : 80 * (T : ℤ) ≤ (T : ℤ) ^ 2 := by rw [sq]; exact mul_le_mul_of_nonneg_right (by omega) (by omega)
+    omega
   rw [← h3] at h4
   exact_mod_cast h4
 
@@ -721,7 +723,9 @@ theorem runNum_of_sizes : ∀ (D : D7) (large₂ : SizeData₂ D) (B : WeightFam
   have hq := modulus_pos_of_third_hypothesis h3
   have h31 := h3.1
   rw [Real.rpow_zero, _root_.one_mul] at h31
-  have hs : (2 : ℝ) ≤ 2 * D.R.f * D.R.m := by nlinarith
+  have hs : (2 : ℝ) ≤ 2 * D.R.f * D.R.m := by
+    have := one_le_mul_of_one_le_of_one_le hfR hmR
+    linarith
   have hRR : D.host.rdE ^ (2 : ℝ) ≤ WeightFamilies.RRv D CR :=
     Real.rpow_le_rpow_of_exponent_le (by linarith) hCR
   have h4 : rr0 D ≤ WeightFamilies.RRv D CR := (rootDiscriminantDegreeRatio_le_rootDiscriminant_sq D).trans hRR
@@ -740,7 +744,7 @@ theorem runNum_of_sizes : ∀ (D : D7) (large₂ : SizeData₂ D) (B : WeightFam
     refine le_trans ?_ hRR
     rw [Real.rpow_two]
     exact pow_le_pow_left₀ (by linarith) hrd 2
-  have hR1 : 1 ≤ WeightFamilies.RRv D CR := by nlinarith
+  have hR1 : 1 ≤ WeightFamilies.RRv D CR := (one_le_pow₀ (by linarith : (1 : ℝ) ≤ s)).trans hR2
   have hP1 : 1 ≤ WeightFamilies.PPv D large₂ C2 A2 := p0.trans h5
   have hkey : s ^ 2 * (WeightAlgebra.DF wL : ℝ) ^ 2 ≤ WeightAlgebra.qq D := by
     refine le_trans ?_ h31
@@ -751,17 +755,29 @@ theorem runNum_of_sizes : ∀ (D : D7) (large₂ : SizeData₂ D) (B : WeightFam
   refine ⟨h1, ?_, fun i => ?_, by unfold WeightAlgebra.cc; positivity, fun _ i => ⟨?_, ?_⟩⟩
   · rw [hw]
     refine le_trans ?_ hn
-    nlinarith [Nat.mul_le_mul_left (D.R.f * D.R.r) (show 2 ≤ D.R.r + 1 by omega)]
+    have hmul := Nat.mul_le_mul_left (D.R.f * D.R.r) (show 2 ≤ D.R.r + 1 by omega)
+    have heq : 2 * D.R.f * D.R.r = D.R.f * D.R.r * 2 := by ring
+    omega
   · have a : 4 * (WeightAlgebra.DF wL : ℝ) ^ 2 ≤ s ^ 2 * (WeightAlgebra.DF wL : ℝ) ^ 2 :=
-      mul_le_mul_of_nonneg_right (by nlinarith) (by positivity)
-    have b : 4 * (WeightAlgebra.DF wL : ℝ) + 4 ≤ D.host.g i := by nlinarith [hqg i]
+      mul_le_mul_of_nonneg_right (by have := pow_le_pow_left₀ (by norm_num : (0 : ℝ) ≤ 2) hs 2; linarith) (by positivity)
+    have b : 4 * (WeightAlgebra.DF wL : ℝ) + 4 ≤ D.host.g i := by
+      have hD2 : 3 * (WeightAlgebra.DF wL : ℝ) ≤ (WeightAlgebra.DF wL : ℝ) ^ 2 := by
+        rw [sq]; exact mul_le_mul_of_nonneg_right hDR (by linarith)
+      linarith [hqg i]
     exact_mod_cast b
   · rw [hsd]
-    have a : Real.sqrt s ≤ s := Real.sqrt_le_iff.2 ⟨by linarith, by nlinarith⟩
-    have b : (WeightAlgebra.DF wL : ℝ) * (2 * Real.sqrt s) ≤ (WeightAlgebra.DF wL : ℝ) * s * 2 := by nlinarith
-    have c : (6 : ℝ) ≤ (WeightAlgebra.DF wL : ℝ) * s := by nlinarith
+    have a : Real.sqrt s ≤ s := Real.sqrt_le_iff.2 ⟨by linarith, le_self_pow₀ (by linarith) two_ne_zero⟩
+    have b : (WeightAlgebra.DF wL : ℝ) * (2 * Real.sqrt s) ≤ (WeightAlgebra.DF wL : ℝ) * s * 2 := by
+      have := mul_le_mul_of_nonneg_left a (by linarith : (0 : ℝ) ≤ (WeightAlgebra.DF wL : ℝ))
+      linarith
+    have c : (6 : ℝ) ≤ (WeightAlgebra.DF wL : ℝ) * s := by
+      have := mul_le_mul hDR hs (by norm_num) (by linarith)
+      linarith
     have d := hqg i
-    nlinarith
+    have hsq : 6 * ((WeightAlgebra.DF wL : ℝ) * s) ≤ ((WeightAlgebra.DF wL : ℝ) * s) ^ 2 := by
+      rw [sq]; exact mul_le_mul_of_nonneg_right c (by linarith)
+    have heq : ((WeightAlgebra.DF wL : ℝ) * s) ^ 2 = s ^ 2 * (WeightAlgebra.DF wL : ℝ) ^ 2 := by ring
+    linarith
   · rw [hsd]
     have d := hqg i
     unfold WeightAlgebra.cc
@@ -805,7 +821,7 @@ theorem PageOK.runNum {D : D7} {B : WeightFamilies.Prov D} {P : ModuliIntegralCh
       exact Real.log_natCast_nonneg _
     have p' : (0 : ℝ) ≤ (DF wL : ℝ) := Nat.cast_nonneg _
     rw [e2]
-    nlinarith [mul_nonneg p' p]
+    linarith [mul_nonneg p' p]
   · have hrd : 2 * (D.R.f : ℝ) * D.R.m ≤ D.host.rdE := hA.2.2.2.2.2.2.2.2.2
     have hf : 0 < D.R.f := by
       have := D.R.two_le_m

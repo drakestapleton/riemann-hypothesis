@@ -231,7 +231,7 @@ theorem scale_bounds {Ch b ka T : ℝ} (r : ℕ) (hb : 1 ≤ b) (hka : 0 < ka) (
   · have h5 : 1 ≤ T * b ^ (|Ch| * m) := h3.trans (mul_le_mul_of_nonneg_left hk2 hT.le)
     have h6 : b ^ (|Ch| * m) ≤ b ^ ((2 * |Ch|) * m) := by
       apply Real.rpow_le_rpow_of_exponent_le hb
-      nlinarith [mul_nonneg hC0 hm]
+      linarith [mul_nonneg hC0 hm]
     have h7 : 1 ≤ T * b ^ ((2 * |Ch|) * m) := h5.trans (mul_le_mul_of_nonneg_left h6 hT.le)
     rw [Real.rpow_neg hb0.le, inv_le_iff_one_le_mul₀ (Real.rpow_pos_of_pos hb0 _)]
     exact h7
@@ -304,7 +304,8 @@ theorem std_grid : ∃ Cg₀ : ℝ, ∀ (Ch Cg : ℝ), Cg₀ ≤ Cg → ∀ (P :
   have hc4 : 36 ≤ max (Cg * ((2 * P.r + 2 : ℕ) : ℝ) ^ 3) g := by
     refine le_trans ?_ (le_max_left _ _)
     have h1 : (1 : ℝ) ≤ ((2 * P.r + 2 : ℕ) : ℝ) ^ 3 := one_le_pow₀ (by push_cast; linarith)
-    nlinarith
+    have := mul_le_mul_of_nonneg_left h1 (by linarith : (0 : ℝ) ≤ Cg)
+    linarith
   have hb1 : 1 ≤ b := by linarith
   have hkb : (P.k : ℝ) ≤ b := by
     have h0 : (1 : ℝ) ≤ ((2 * P.r + P.k + 1 : ℕ) : ℝ) := by
@@ -312,7 +313,8 @@ theorem std_grid : ∃ Cg₀ : ℝ, ∀ (Ch Cg : ℝ), Cg₀ ≤ Cg → ∀ (P :
       push_cast; linarith
     have h1 : ((2 * P.r + P.k + 1 : ℕ) : ℝ) ≤ ((2 * P.r + P.k + 1 : ℕ) : ℝ) ^ 7 := le_self_pow₀ h0 (by norm_num)
     have h2 : (P.k : ℝ) ≤ ((2 * P.r + P.k + 1 : ℕ) : ℝ) := by push_cast; linarith
-    nlinarith
+    have := mul_le_mul_of_nonneg_right hCg (pow_nonneg (by linarith : (0 : ℝ) ≤ ((2 * P.r + P.k + 1 : ℕ) : ℝ)) 7)
+    linarith
   obtain ⟨hTl, hTu⟩ := scale_bounds P.r hb1 hka hka1 hka2 hT1 hT2
   obtain ⟨hTl', hTu'⟩ := scale_bounds P.r hb1 hka hka1 hka2 hT1' hT2'
   have hh := interlace_half hhalf (fun i hi => (hint i hi).1) hI
@@ -334,7 +336,9 @@ theorem std_grid : ∃ Cg₀ : ℝ, ∀ (Ch Cg : ℝ), Cg₀ ≤ Cg → ∀ (P :
   · intro n₀ he hne
     have hL : ((30 * (P.r + 1) ^ 2 + 6 : ℕ) : ℝ) ≤ Cg * ((P.r : ℝ) + 1) ^ 2 := by
       have h1 : (1 : ℝ) ≤ ((P.r : ℝ) + 1) ^ 2 := one_le_pow₀ (by linarith)
-      push_cast; nlinarith
+      push_cast
+      have := mul_le_mul_of_nonneg_right hCg (sq_nonneg ((P.r : ℝ) + 1))
+      linarith
     rcases hcase with ⟨heq, l, hl, hsl, -⟩ | ⟨hneq, hcut⟩
     · have hall : ∀ i ∈ Finset.Icc 1 P.k, P.u i = P.u' i := by
         intro i hi
@@ -432,14 +436,18 @@ theorem margin_arith_closing : ∀ Cc C₀ : ℝ, 0 ≤ C₀ → ∃ Cg₀ : ℝ
       mul_le_mul_of_nonneg_right hCg hX0
     have h3 : Cc * (R ^ 4 * Q) ≤ |Cc| * (R ^ 4 * Q) := mul_le_mul_of_nonneg_right hle hX0
     have h4 : C₀ * (2 * R ^ 3) ≤ C₀ * (R ^ 4 * Q) := mul_le_mul_of_nonneg_left hX hC₀
-    nlinarith
+    have e1 : (|Cc| + C₀ + 40) * (R ^ 4 * Q) = |Cc| * (R ^ 4 * Q) + C₀ * (R ^ 4 * Q) + 40 * (R ^ 4 * Q) := by ring
+    linarith
   · have h1 := le_max_left (Cg * (2 * R) ^ 3) (200 * d)
     have h2 := le_max_right (Cg * (2 * R) ^ 3) (200 * d)
     have h3 : (C₀ + 40) * R ^ 3 ≤ Cg * R ^ 3 :=
       mul_le_mul_of_nonneg_right (by linarith) (by positivity)
     have h4 : Cg * (2 * R) ^ 3 = 8 * (Cg * R ^ 3) := by ring
-    nlinarith
-  · nlinarith
+    have e1 : (C₀ + 40) * R ^ 3 = C₀ * R ^ 3 + 40 * R ^ 3 := by ring
+    linarith
+  · have e1 : R * (2 * (p₀ : ℝ) + (n₀ : ℝ)) + R * (R + 1) = 2 * (R * p₀) + R * n₀ + R ^ 2 + R := by ring
+    have e2 : (C₀ + 10) * (2 * R) ^ 3 = 8 * (C₀ * R ^ 3) + 80 * R ^ 3 := by ring
+    linarith
 
 end GlobalTheory
 end -- clump:auto
@@ -479,12 +487,16 @@ theorem gapOK_of (k r : ℕ) (hk : 1 ≤ k) (h : ℝ)
     unfold ThreeDimData.aOf
     rw [← hm, le_div_iff₀ (by positivity)]
     have : 0 ≤ m ^ 4 * Real.sqrt m * n ^ 3 := by positivity
-    nlinarith
-  have hM : ThreeDimData.Mexp r ≤ m ^ 2 := by unfold ThreeDimData.Mexp; rw [hm]; nlinarith
+    have e : 1000 * (m ^ 4 * n ^ 3) * (8 * Real.sqrt m) = 8000 * (m ^ 4 * Real.sqrt m * n ^ 3) := by ring
+    linarith
+  have hM : ThreeDimData.Mexp r ≤ m ^ 2 := by
+    unfold ThreeDimData.Mexp; rw [hm]; ring_nf; linarith [sq_nonneg (r : ℝ)]
   have hM0 : 0 ≤ ThreeDimData.Mexp r := by unfold ThreeDimData.Mexp; positivity
-  have hG : ThreeDimData.AG k r ≤ 4 * n ^ 2 := by unfold ThreeDimData.AG; rw [hn]; nlinarith
+  have hG : ThreeDimData.AG k r ≤ 4 * n ^ 2 := by
+    unfold ThreeDimData.AG; rw [hn]; ring_nf; linarith [sq_nonneg (r : ℝ), sq_nonneg (k : ℝ), mul_nonneg hr (Nat.cast_nonneg k)]
   have hG0 : 0 ≤ ThreeDimData.AG k r := by unfold ThreeDimData.AG; positivity
-  have hd : ThreeDimData.dN k r ≤ n ^ 2 := by unfold ThreeDimData.dN; rw [hn]; nlinarith
+  have hd : ThreeDimData.dN k r ≤ n ^ 2 := by
+    unfold ThreeDimData.dN; rw [hn]; ring_nf; linarith [sq_nonneg (r : ℝ), sq_nonneg (k : ℝ), mul_nonneg hr (Nat.cast_nonneg k)]
   have hn23 : n ^ 2 ≤ n ^ 3 := pow_le_pow_right₀ hn1 (by norm_num)
   have hm24 : m ^ 2 ≤ m ^ 4 := pow_le_pow_right₀ hm1 (by norm_num)
   have hS : ThreeDimData.AS k r ≤ n ^ 3 := by
@@ -600,7 +612,8 @@ theorem num_of_stdHyp : ∀ Cq : ℝ, 0 ≤ Cq → ∃ Cg₀ : ℝ, ∀ (Ch Cg :
     have h1 : Cg * ((2 * P.r + 2 : ℕ) : ℝ) ^ 3 ≤ ga := le_max_left _ _
     have h2 : 200 * d ≤ ga := le_max_right _ _
     have h3 := mul_le_mul_of_nonneg_right hCg (le_trans zero_le_one hm3)
-    nlinarith
+    have h4 := mul_le_mul_of_nonneg_left hm3 (by linarith : (0 : ℝ) ≤ 10 ^ 6)
+    linarith
   have hgap' : Formalism.QuantumDeterminants.GapAtLeast (PI.BesselPeriodGGP.eps48 P.k P.r) lam (max h0 ga) := by
     intro a c hac
     exact max_le (hgap a c hac) (hall a c (fun e => hac (by rw [e])))
@@ -648,7 +661,9 @@ theorem decay_le (c₃ Cc r n N A e : ℝ) (hc : c₃ ≤ Cc) (h0 : 0 ≤ Cc) (h
   have hn1 : (1 : ℝ) ≤ n := by linarith
   have h2 : (r + 1) ^ 2 ≤ (r + 1) ^ 4 := pow_le_pow_right₀ h1 (by norm_num)
   have h3 : r * n + 1 ≤ N * n ^ 2 + n ^ 3 := by
-    have a1 : r * n + 1 ≤ n ^ 2 := by nlinarith
+    have a1 : r * n + 1 ≤ n ^ 2 := by
+      have := mul_le_mul_of_nonneg_right hn (by linarith : (0 : ℝ) ≤ n)
+      linarith [show (r + 1) * n = r * n + n by ring, show n * n = n ^ 2 by ring]
     have a2 : n ^ 2 ≤ n ^ 3 := pow_le_pow_right₀ hn1 (by norm_num)
     have a3 : 0 ≤ N * n ^ 2 := by positivity
     linarith
@@ -875,11 +890,13 @@ theorem decay_le (r k N : ℝ) (hr : 0 ≤ r) (hk : 0 ≤ k) (hN : 0 ≤ N) :
     (r + 1) ^ 2 * (r * (2 * r + k + 1) + 1) ≤ (r + 1) ^ 4 * (N * (2 * r + k + 1) ^ 2 + (2 * r + k + 1) ^ 3) := by
   set n := 2 * r + k + 1 with hn
   have h1 : r + 1 ≤ n := by linarith
-  have h2 : r * n + 1 ≤ n ^ 2 := by nlinarith
+  have h2 : r * n + 1 ≤ n ^ 2 := by
+    have := mul_le_mul_of_nonneg_right h1 (by linarith : (0 : ℝ) ≤ n)
+    linarith [show (r + 1) * n = r * n + n by ring, show n * n = n ^ 2 by ring]
   have h3 : n ^ 2 ≤ n ^ 3 := pow_le_pow_right₀ (by linarith) (by norm_num)
   have h4 : (r + 1) ^ 2 ≤ (r + 1) ^ 4 := pow_le_pow_right₀ (by linarith) (by norm_num)
   have h5 : 0 ≤ N * n ^ 2 := by positivity
-  have h6 : 0 ≤ r * n + 1 := by nlinarith
+  have h6 : 0 ≤ r * n + 1 := by positivity
   exact mul_le_mul h4 (by linarith) h6 (by positivity)
 
 theorem thmBp_eig_eq : GlobalTheory.HCXi.BesselXiIntegrable → P5.ThmPActualCpt → NFTopDomAll → ∀ C C₃ C₀ : ℝ, 0 ≤ C → 0 ≤ C₃ → 0 ≤ C₀ → ∃ C₄ Cc : ℝ, ∀ (P : M.Par) (Wp Wq : Type) [NormedAddCommGroup Wp] [InnerProductSpace ℂ Wp] [NormedAddCommGroup Wq] [InnerProductSpace ℂ Wq] [FiniteDimensional ℂ Wp] [FiniteDimensional ℂ Wq] (p : KB.Pl P Wp Wq) (f : B.Mat P.k P.r → (Wq →L[ℂ] Wp)) (b c A₀ : ℝ) (n₀ p₀ : ℕ) (lam lam' : Fin (2 * P.r + P.k + 1) → ℝ), StdNum C b c P lam → (n₀ = 30 * (P.r + 1) ^ 2 + 6 ∧ (∀ i ∈ Finset.Icc 1 P.k, P.u i = P.u' i) ∧ ∃ l, 1 ≤ l ∧ l < P.k ∧ 2 * (n₀ : ℝ) + 1 ≤ P.u' l - P.u' (l + 1)) → 3 * (P.r + 1) ≤ 2 * p₀ → (p₀ : ℝ) ≤ C₀ * ((P.r : ℝ) + 1) ^ 2 → EigDec f A₀ lam' → Cc * ((P.r : ℝ) + 1) ^ 4 * (((3 * (P.r + 1) : ℕ) : ℝ) * (2 * (P.r : ℝ) + P.k + 1) ^ 2 + (2 * (P.r : ℝ) + P.k + 1) ^ 3) ≤ A₀ - (((2 * P.r + 2) * p₀ + n₀ * (P.r + 1) : ℕ) : ℝ) → (∀ s, |lam' s - lam s| + (((2 * P.r + 2) * p₀ + n₀ * (P.r + 1) : ℕ) : ℝ) ≤ c - 1) → TBB.RegularityBoundBigCell p f b C₃ (2 * p₀ + n₀) → TBB.ThmBpAt p f b C₄ n₀ p₀ := by

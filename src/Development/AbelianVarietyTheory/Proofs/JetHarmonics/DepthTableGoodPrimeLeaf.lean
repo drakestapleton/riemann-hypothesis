@@ -162,7 +162,7 @@ theorem place_bound (l n m S y u : ℕ) (hl : 5 ≤ l) (hn : 1 ≤ n) (hu : u �
         = (2 * m * ((l + 1) * y) + m * u) * (1 / ((l : ℝ) - 1)) := by ring
       _ ≤ (2 * m * ((l + 1) * y) + 2 * m * u) * (2 / l) := by
           apply mul_le_mul _ hi (by positivity) (by positivity)
-          nlinarith [mul_nonneg hm0 hu0]
+          linarith [mul_nonneg hm0 hu0]
       _ = _ := by ring
   have he : 0 ≤ Formalism.IncomingBounds.rho l * n * u := by positivity
   push_cast
@@ -181,9 +181,9 @@ theorem additive_bound (l n : ℕ) (hl : 5 ≤ l) (hn : 3 ≤ n) :
   have h2 : Real.logb l ((n : ℝ) + 1) ≤ Real.log ((n : ℝ) + 1) := logb_le_log l hl _ (by linarith)
   have h2' : 0 ≤ Real.logb l ((n : ℝ) + 1) := Real.logb_nonneg (by linarith) (by linarith)
   set L := Real.log ((n : ℝ) + 1)
-  have hn2 : (1 : ℝ) ≤ (n : ℝ) ^ 2 := by nlinarith
-  have hnL : 1 ≤ (n : ℝ) ^ 2 * L := by nlinarith
-  have hnL' : L ≤ (n : ℝ) ^ 2 * L := by nlinarith
+  have hn2 : (1 : ℝ) ≤ (n : ℝ) ^ 2 := one_le_pow₀ (by linarith)
+  have hnL : 1 ≤ (n : ℝ) ^ 2 * L := one_le_mul_of_one_le_of_one_le hn2 hL
+  have hnL' : L ≤ (n : ℝ) ^ 2 * L := le_mul_of_one_le_left (by linarith) hn2
   have hS : (S0 l 1 n : ℝ) ≤ 449 * ((n : ℝ) ^ 2 * L) := by
     unfold S0
     have := Nat.ceil_lt_add_one (a := 64 * (n : ℝ) ^ 2 * (((1 : ℕ) : ℝ) + 3 + 3 * Real.logb l ((n : ℝ) + 1)))
@@ -191,7 +191,7 @@ theorem additive_bound (l n : ℕ) (hl : 5 ≤ l) (hn : 3 ≤ n) :
     have h4 : 64 * (n : ℝ) ^ 2 * (((1 : ℕ) : ℝ) + 3 + 3 * Real.logb l ((n : ℝ) + 1)) ≤ 64 * (n : ℝ) ^ 2 * (7 * L) := by
       apply mul_le_mul_of_nonneg_left _ (by positivity)
       push_cast; linarith
-    nlinarith
+    linarith [show 64 * (n : ℝ) ^ 2 * (7 * L) = 448 * ((n : ℝ) ^ 2 * L) by ring]
   have : Real.logb l n + 1 + 2 * (S0 l 1 n : ℝ) ≤ 900 * ((n : ℝ) ^ 2 * L) := by linarith
   calc _ = (n : ℝ) * (Real.logb l n + 1 + 2 * (S0 l 1 n : ℝ)) := by ring
     _ ≤ n * (900 * ((n : ℝ) ^ 2 * L)) := mul_le_mul_of_nonneg_left this (by linarith)
@@ -305,7 +305,7 @@ theorem val_le (hC : RF.CHSupply) (hM : RF.MONSupply) (C1 : ℝ) (P : RF.Par) (l
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, RF.GlobalTheory.what₂]
     have h2 := Finset.sum_le_sum (s := Finset.univ) fun z _ => this z
     rw [Finset.sum_const, Finset.card_univ, hP.card, smul_eq_mul] at h2
-    nlinarith
+    exact (Nat.mul_le_mul_left 2 h2).trans_eq (by ring)
   · intro z s k
     have e0 := (hrk z).2.1
     have e1 := (hrk z).2.2
@@ -361,12 +361,16 @@ theorem of_supplies (hB : RF.BiSupply) (hC : RF.CHSupply) (hM : RF.MONSupply) : 
   rw [hn1] at h1 hu
   have hT : 0 < T := by linarith [hD.T_one]
   have hSE := hP.SE_nonneg
-  have hl2 : (0 : ℝ) < (l : ℝ) ^ 2 - 1 := by nlinarith
+  have hl2 : (0 : ℝ) < (l : ℝ) ^ 2 - 1 := by
+    have : (5 : ℝ) ^ 2 ≤ (l : ℝ) ^ 2 := pow_le_pow_left₀ (by norm_num) hl' 2
+    linarith
   have hrho : 0 ≤ Formalism.IncomingBounds.rho l := by
     unfold Formalism.IncomingBounds.rho; positivity
   have hrho' : Formalism.IncomingBounds.rho l ≤ 1 / l := by
     unfold Formalism.IncomingBounds.rho
-    apply one_div_le_one_div_of_le (by linarith); nlinarith
+    apply one_div_le_one_div_of_le (by linarith)
+    have : (5 : ℝ) * l ≤ (l : ℝ) ^ 2 := by rw [sq]; exact mul_le_mul_of_nonneg_right hl' (by linarith)
+    linarith
   set L := Real.log ((n : ℝ) + 1) with hLdef
   have hL : 1 ≤ L := one_le_log _ (by linarith)
   have h2 : ∀ z, T * (RF.blockBd l n P.m 1 (y z) + RF.chBd l n P.m (u z)) ≤
@@ -432,7 +436,8 @@ theorem of_supplies (hB : RF.BiSupply) (hC : RF.CHSupply) (hM : RF.MONSupply) : 
   have qA : A ≤ L * A := le_mul_of_one_le_left pA hL
   have qD : D ≤ L * D := le_mul_of_one_le_left pD hL
   have r1 : 0 ≤ C1 * (L * A + Cth + L * D) := mul_nonneg hC1 (by linarith)
-  nlinarith
+  linarith [show (900 + 7 * C1) * (L * A + B + Cth + L * D) =
+    900 * (L * A + B + Cth + L * D) + 7 * C1 * B + 7 * (C1 * (L * A + Cth + L * D)) by ring]
 
 theorem phiCBd : PhiCBd := of_supplies _root_.GlobalTheory.oddBlock_supply.2 GlobalTheory.CharBlock.chSupply.2 _root_.GlobalTheory.MonBlock.monSupply.2
 
@@ -722,7 +727,8 @@ theorem main : ∀ (r f n m nW T l k : ℕ) (b L A : ℝ), 1 ≤ m → m ≤ n �
     have hz : 3 * b / (T * ((l : ℝ) - 1)) ≤ 6 * Y := by
       rw [div_le_iff₀ hq]
       have := mul_le_mul_of_nonneg_right hl' hTY
-      nlinarith
+      linarith [show 6 * Y * (T * ((l : ℝ) - 1)) = 3 * (2 * ((l : ℝ) - 1) * (T * Y)) by ring,
+        show l * T * Y = l * (T * Y) by ring]
     refine ⟨⌈3 * b / (T * ((l : ℝ) - 1))⌉₊, ?_, fun x hx => ?_⟩
     · have h1 := (Nat.ceil_lt_add_one (show 0 ≤ 3 * b / (T * ((l : ℝ) - 1)) by positivity)).le
       have h2 := mul_le_mul_of_nonneg_left (h1.trans (add_le_add_left hz 1)) hrf
@@ -840,10 +846,19 @@ theorem nu_le (hC : RF.CHSupply) (hM : RF.MONSupply) (P : RF.Par) (l : ℕ) (C1 
     calc _ ≤ ∑ z ∈ Z, 3 * P.r * Fintype.card (ZMod P.d) := by
           refine Finset.sum_le_sum fun z hz => ?_
           have : (R.X z).n ≤ P.r := by rw [(R.hn z).1]; omega
-          nlinarith
+          have h1 : Fintype.card (ZMod P.d) * (R.X z).n ≤ Fintype.card (ZMod P.d) * P.r :=
+            Nat.mul_le_mul_left _ this
+          have h2 : 2 * P.r ≤ 2 * P.r * Fintype.card (ZMod P.d) := Nat.le_mul_of_pos_right _ hpos
+          have heq1 : Fintype.card (ZMod P.d) * P.r = P.r * Fintype.card (ZMod P.d) := mul_comm _ _
+          have heq2 : 3 * P.r * Fintype.card (ZMod P.d) =
+              2 * P.r * Fintype.card (ZMod P.d) + P.r * Fintype.card (ZMod P.d) := by ring
+          linarith
       _ = 3 * P.r * P.f := by
           rw [Finset.sum_const, smul_eq_mul, ← hc]; ring
-      _ ≤ nW := by nlinarith
+      _ ≤ nW := by
+          have : 3 * P.r * P.f ≤ 4 * P.r * P.f := Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ (by omega))
+          have hcomm : 4 * P.r * P.f = 4 * P.f * P.r := by ring
+          linarith
   · intro z hz g a k
     simp only [List.map_cons, List.sum_cons, List.map_map, Finset.sum_map_toList,
       Function.comp_def, RF.GlobalTheory.wt]
@@ -903,13 +918,18 @@ theorem splitBd_of_supplies (hC : RF.CHSupply) (hM : RF.MONSupply) : SplitBd := 
         _ = _ := by rw [hB]; ring
     have e3 := hD.rest_le
     have e4 := mul_nonneg hC1 hA0
-    nlinarith
+    have e1' : Pk.T * ((∑ z, (Pk.W z : ℝ)) * P.m) = Pk.T * (∑ z, (Pk.W z : ℝ)) * P.m := by ring
+    have e2' : (∑ z, P.w z + P.f * (C1 * P.SE)) * P.m = A + P.f * (C1 * P.SE) * P.m := by rw [hA]; ring
+    have e5 : (1 + 2 * C1) * (A + B) = A + 2 * (C1 * A) + B + 2 * (C1 * B) := by ring
+    have e6 : Pk.T * ((∑ z, (Pk.W z : ℝ)) * P.m + Pk.rest) = Pk.T * ((∑ z, (Pk.W z : ℝ)) * P.m) + Pk.T * Pk.rest := by ring
+    linarith
   have h4 : 0 ≤ (1 + 2 * C1) * (A + B) := by positivity
   refine (mul_le_mul_of_nonneg_left hν hT).trans ?_
   rw [← add_div, ← mul_div_assoc, ← mul_div_assoc]
   refine (div_le_div_of_nonneg_right h3 hl'.le).trans ?_
   rw [div_le_div_iff₀ hl' (by linarith)]
-  nlinarith
+  have := mul_le_mul_of_nonneg_left (show (l : ℝ) ≤ 2 * ((l : ℝ) - 1) by linarith) h4
+  linarith [show 2 * (1 + 2 * C1) * (A + B) * ((l : ℝ) - 1) = (1 + 2 * C1) * (A + B) * (2 * ((l : ℝ) - 1)) by ring]
 
 end GlobalTheory.SplitPackageBound
 
@@ -976,26 +996,35 @@ theorem UpperTheory.f_mul_leastAdmissibleLevel_rows_le :
   have hdiv : (f:ℝ) ^ 2 * (n:ℝ) ^ 2 * L ^ 2 ≤ (f:ℝ) ^ 2 * (n:ℝ) ^ 3 * L ^ 2 / m := by
     rw [le_div_iff₀ (by linarith)]
     have := mul_le_mul_of_nonneg_left hmnR hX
-    nlinarith
+    linarith [show (f : ℝ) ^ 2 * (n : ℝ) ^ 2 * L ^ 2 * n = (f : ℝ) ^ 2 * (n : ℝ) ^ 3 * L ^ 2 by ring]
   have h1 : (f:ℝ) * (((RF.i0 k l : ℕ) : ℝ) + 1) * n ≤ f * (4 + 2 * L) * n := by
     apply mul_le_mul_of_nonneg_right _ (by linarith)
     apply mul_le_mul_of_nonneg_left _ (by linarith)
     linarith
   have a1 : 4 + 2 * L ≤ 10 * (f:ℝ) * L ^ 2 := by
-    nlinarith [mul_nonneg (sub_nonneg.2 hfR) (sq_nonneg L)]
-  have hrn : (1:ℝ) ≤ r * n := by nlinarith
+    have hL2 : 3 * L ≤ L ^ 2 := by rw [sq]; exact mul_le_mul_of_nonneg_right hL (by linarith)
+    have hmul := mul_le_mul_of_nonneg_right hfR (sq_nonneg L)
+    linarith [show 10 * (f : ℝ) * L ^ 2 = 10 * ((f : ℝ) * L ^ 2) by ring]
+  have hrn : (1:ℝ) ≤ r * n := one_le_mul_of_one_le_of_one_le hr1 hn1
   have a2 : (n:ℝ) ≤ r * (n:ℝ) ^ 2 := by
-    nlinarith [mul_le_mul_of_nonneg_left hrn (by linarith : (0:ℝ) ≤ n)]
+    have := mul_le_mul_of_nonneg_left hrn (by linarith : (0 : ℝ) ≤ n)
+    linarith [show (n : ℝ) * ((r : ℝ) * n) = (r : ℝ) * (n : ℝ) ^ 2 by ring]
   have h2 : (f:ℝ) * (4 + 2 * L) * n ≤ 10 * r * ((f:ℝ) ^ 2 * (n:ℝ) ^ 2 * L ^ 2) := by
     calc (f:ℝ) * (4 + 2 * L) * n ≤ f * (10 * f * L ^ 2) * n := by gcongr
       _ = 10 * (f:ℝ) ^ 2 * L ^ 2 * n := by ring
       _ ≤ 10 * (f:ℝ) ^ 2 * L ^ 2 * (r * (n:ℝ) ^ 2) := by gcongr
       _ = 10 * r * ((f:ℝ) ^ 2 * (n:ℝ) ^ 2 * L ^ 2) := by ring
   have h3 := mul_le_mul_of_nonneg_left hdiv (by linarith : (0:ℝ) ≤ 10 * r)
-  have h4 : 4 * (f:ℝ) * r ≤ 10 * r * f := by nlinarith
+  have h4 : 4 * (f:ℝ) * r ≤ 10 * r * f := by
+    have := mul_nonneg (by linarith : (0 : ℝ) ≤ r) (by linarith : (0 : ℝ) ≤ f)
+    linarith
   have key : (((f * ((RF.i0 k l + 1) * n + 4 * r)) : ℕ) : ℝ) ≤ nW := by
     push_cast
-    nlinarith
+    have e1 : (f : ℝ) * ((((RF.i0 k l : ℕ) : ℝ) + 1) * n + 4 * r) =
+        (f : ℝ) * (((RF.i0 k l : ℕ) : ℝ) + 1) * n + 4 * f * r := by ring
+    have e2 : 10 * (r : ℝ) * (f + (f : ℝ) ^ 2 * (n : ℝ) ^ 3 * L ^ 2 / m) =
+        10 * r * f + 10 * r * ((f : ℝ) ^ 2 * (n : ℝ) ^ 3 * L ^ 2 / m) := by ring
+    linarith
   exact_mod_cast key
 end -- clump:auto
 end -- clump:auto
@@ -1417,7 +1446,18 @@ theorem normalizedLattice_exponent_eq_roundedDepth_goodPlace : ∀ (E : Type) [F
   refine ⟨?_, fun h0 => ?_⟩
   · rw [key, div_le_iff₀ (by linarith)]
     refine (Int.ceil_lt_add_one _).le.trans ?_
-    nlinarith
+    have hne : (ramOverZ (placeBelow (K := c.F) v) : ℝ) ≠ 0 := by linarith
+    have e1 : (ramOverZ (placeBelow (K := c.F) v) : ℝ) * (Dd.Q.T : ℝ) *
+        ((nuWAt (Xo := Xo (ι j)) (c := c) Dd (placeBelow (K := c.F) v) (ι j)).toReal /
+          (ramOverZ (placeBelow (K := c.F) v) : ℝ)) =
+        (Dd.Q.T : ℝ) * (nuWAt (Xo := Xo (ι j)) (c := c) Dd (placeBelow (K := c.F) v) (ι j)).toReal := by
+      field_simp
+    have e2 : ((Dd.Q.T : ℝ) * (nuWAt (Xo := Xo (ι j)) (c := c) Dd (placeBelow (K := c.F) v) (ι j)).toReal /
+        (ramOverZ (placeBelow (K := c.F) v) : ℝ) + 1) * (ramOverZ (placeBelow (K := c.F) v) : ℝ) =
+        (Dd.Q.T : ℝ) * (nuWAt (Xo := Xo (ι j)) (c := c) Dd (placeBelow (K := c.F) v) (ι j)).toReal +
+        (ramOverZ (placeBelow (K := c.F) v) : ℝ) := by
+      field_simp
+    linarith
   · rw [key, h0]
     simp
 
@@ -1660,7 +1700,7 @@ theorem leafGood : LeafGoodSt := by
         have h0 : (0 : ℝ) ≤ O.DF := le_trans (Nat.cast_nonneg _) h1
         have h2 : O.DF ≤ O.Y := by
           unfold OnObj.Y
-          nlinarith
+          linarith [mul_le_mul_of_nonneg_right hC h0]
         have : ((DF (Dw (ι j)) (Dd.aL (ι j)) : ℕ) : ℝ) < (Formalism.EigenvalueLevelCeiling.plc w : ℝ) := lt_of_le_of_lt (h1.trans h2) hY
         exact_mod_cast this
     have k1 := key w rfl
