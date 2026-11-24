@@ -102,8 +102,10 @@ theorem gap_le (D : D7) (B : ℝ) (hB : 1 ≤ B) (hc : Real.sqrt (cloudLen D) �
   set t := D.R.t with ht
   have hN : bigN D ≤ 5 * t ^ 2 := by
     unfold bigN sLen
-    have : D.R.m * (t + (D.R.r + 6) + 1) ≤ t * (3 * t) := Nat.mul_le_mul (by omega) (by omega)
-    nlinarith
+    have : D.R.m * (D.R.t + (D.R.r + 6) + 1) ≤ t * (3 * t) := Nat.mul_le_mul (by omega) (by omega)
+    have h3t : t * (3 * t) = 3 * t ^ 2 := by ring
+    have ht2 : t ≤ t ^ 2 := by rw [sq]; exact Nat.le_mul_self t
+    omega
   have hn : nRk D ≤ t := by unfold nRk; omega
   have hs : sLen D ≤ 2 * t := by unfold sLen; omega
   have t1 : (132 : ℝ) ≤ t := by exact_mod_cast (by omega : 132 ≤ t)
@@ -127,7 +129,8 @@ theorem gap_le (D : D7) (B : ℝ) (hB : 1 ≤ B) (hc : Real.sqrt (cloudLen D) �
   have a5 : (t : ℝ) ≤ (t : ℝ) ^ 3 := le_self_pow₀ (by linarith) (by norm_num)
   have a6 : (t : ℝ) ^ 7 ≤ (t : ℝ) ^ 7 * B := le_mul_of_one_le_right (by positivity) hB
   have a7 : (nRk D : ℝ) ^ 3 * Real.sqrt (cloudLen D) ≤ (t : ℝ) ^ 7 * B := by gcongr
-  have a8 : Real.sqrt D.R.m ≤ t := (Real.sqrt_le_iff.2 ⟨by linarith, by nlinarith⟩)
+  have a8 : Real.sqrt D.R.m ≤ t :=
+    Real.sqrt_le_iff.2 ⟨by linarith, hm'.trans (le_self_pow₀ (by linarith) (by norm_num))⟩
   have a9 : (nRk D : ℝ) ^ 2 * Real.sqrt D.R.m ≤ (t : ℝ) ^ 3 := by
     calc (nRk D : ℝ) ^ 2 * Real.sqrt D.R.m ≤ (t : ℝ) ^ 2 * t := by gcongr
       _ = _ := by ring
@@ -146,20 +149,20 @@ theorem hc_bounds (P : ParameterChoice' D L) (hS : SizesAt L) (hx : L.sc.x ≤ L
   have hn : (1 : ℝ) ≤ D.R.n := by exact_mod_cast D.R.n_pos'
   have hb' : L.sc.b' ≤ L.sc.b := by
     unfold Scale.b' Scale.a
-    rw [div_le_iff₀ (by linarith)]; nlinarith
+    rw [div_le_iff₀ (by linarith)]
+    exact (mul_le_mul_of_nonneg_right hx (by linarith)).trans_eq (mul_comm _ _)
   have hb0 : 0 < L.sc.b' := by unfold Scale.b' Scale.a; have : 0 < L.sc.X' := by linarith
                                positivity
   have hq : L.sc.b' / L.sc.x ≤ L.sc.b' := div_le_self hb0.le x1.le
   have hw : L.sc.w'' D.R.n ≤ L.sc.b' / L.sc.x := by
     unfold Scale.w''
-    exact div_le_div_of_nonneg_left hb0.le x0 (by nlinarith)
+    exact div_le_div_of_nonneg_left hb0.le x0 (le_mul_of_one_le_right x0.le hn)
   have hw0 : 0 < L.sc.w'' D.R.n := by unfold Scale.w''; positivity
   have ht : (1 : ℝ) ≤ D.R.t := L.t_win.1
   have he : L.etaSz < L.sc.w'' D.R.n := by
     have h1 := P.teta
     have h2 : L.sc.w'' D.R.n / L.sc.x < L.sc.w'' D.R.n := div_lt_self hw0 x1
-    have := L.etaSz_pos
-    nlinarith
+    exact ((le_mul_of_one_le_left L.etaSz_pos.le ht).trans h1).trans_lt h2
   have hwj : wj D (l.1 + 1) τ = (((D.hc τ).e l : ℚ) : ℝ) := by
     unfold wj
     rw [dite_eq_left (by simp)]
@@ -177,7 +180,8 @@ theorem hc_bounds (P : ParameterChoice' D L) (hS : SizesAt L) (hx : L.sc.x ≤ L
       linarith
     have : LevelStarExponents.Nstar L * L.sc.x ^ L.sc.eps * L.LaG * L.sc.b' / D.R.k =
       (LevelStarExponents.Nstar L * L.sc.x ^ L.sc.eps * L.LaG / D.R.k) * L.sc.b' := by ring
-    nlinarith
+    have h6 := mul_le_mul_of_nonneg_right h5 hb0.le
+    linarith
   have key : L.sc.w'' D.R.n ≤ (((D.hc τ).e l : ℚ) : ℝ) ∧ (((D.hc τ).e l : ℚ) : ℝ) ≤ 4 * L.sc.b := by
     rw [← hwj]
     by_cases h1 : (D.eTau τ : D.R.GG) ∈ D.host.topPlaces
@@ -223,7 +227,9 @@ theorem sizeRows_of (P : ParameterChoice' D L) (T : ParamsT D L P) (hC : P.CnW =
   have hL : L.sc.L = z ^ 4 := by
     rw [hzdef, ← Real.rpow_natCast, ← Real.rpow_mul x0.le]; unfold Scale.L; congr 1; push_cast; ring
   have z3 : 512 ≤ z ^ 3 := by have := pow_le_pow_left₀ (by norm_num) hz 3; linarith
-  have hLz : 512 * z ≤ L.sc.L := by rw [hL]; nlinarith only [hz, z3]
+  have hLz : 512 * z ≤ L.sc.L := by
+    rw [hL]
+    exact (mul_le_mul_of_nonneg_right z3 (by linarith)).trans_eq (by ring)
   set s := L.sc.x ^ ((1 : ℝ) / 4) with hsdef
   have hs4 : L.sc.x = s ^ 4 := by
     rw [hsdef, ← Real.rpow_natCast, ← Real.rpow_mul x0.le]; norm_num
@@ -298,7 +304,7 @@ theorem sizeRows_of (P : ParameterChoice' D L) (T : ParamsT D L P) (hC : P.CnW =
   have t9' : (1 : ℝ) ≤ (D.R.t : ℝ) ^ 9 := one_le_pow₀ (by linarith)
   have htB : (D.R.t : ℝ) ^ 9 ≤ B := (le_mul_of_one_le_left (by positivity) d1).trans hdB
   have B1 : 1 ≤ B := t9'.trans htB
-  have Bb : B ≤ L.sc.b := by nlinarith only [B1, hB2]
+  have Bb : B ≤ L.sc.b := by rw [← hB2]; exact le_self_pow₀ B1 (by norm_num)
   have xX : L.sc.x ≤ L.sc.X' := by
     have a : L.sc.x ≤ D.R.k := by
       refine le_trans ?_ hk
@@ -312,7 +318,8 @@ theorem sizeRows_of (P : ParameterChoice' D L) (T : ParamsT D L P) (hC : P.CnW =
     rw [div_le_iff₀ (by positivity)]
     calc L.sc.x * L.sc.b / L.sc.X' ≤ L.sc.x * L.sc.b := div_le_self (by positivity) (by linarith)
       _ ≤ L.sc.b * (L.sc.x * D.R.n) := by linarith only [mul_nonneg (mul_pos x0 b0).le (sub_nonneg.2 n1')]
-  have hSc : 4 * L.Sc ≤ L.sc.b := by nlinarith only [P.kS_le, L.Sc_pos, hw, k4]
+  have hSc : 4 * L.Sc ≤ L.sc.b :=
+    (mul_le_mul_of_nonneg_right k4 L.Sc_pos.le).trans (P.kS_le.trans hw)
   refine ⟨⟨P, T, hC⟩, hS, ?_, m44, ?_, ?_, ?_, fun i => ?_, ?_, lrd, lc, ?_, hc_bounds P hS xX, hc⟩
   · have a : (D.R.m : ℝ) ^ 4 ≤ (2 * s ^ 2) ^ 4 := pow_le_pow_left₀ (by positivity) hm2 4
     have b : (D.R.f : ℝ) = 2 * D.R.n := by rw [r5]; push_cast; ring
@@ -333,7 +340,11 @@ theorem sizeRows_of (P : ParameterChoice' D L) (T : ParamsT D L P) (hC : P.CnW =
   · have a : (D.R.N D.R.m : ℝ) ≤ (D.R.t : ℝ) ^ 3 := by
       unfold Ranks.N; push_cast
       have : (D.R.m : ℝ) * (D.R.t + 1) ≤ D.R.t * (D.R.t + 1) := mul_le_mul_of_nonneg_right (by linarith only [mt]) (by positivity)
-      nlinarith only [this, kt, t132, mul_nonneg (sub_nonneg.2 t132) (sq_nonneg (D.R.t : ℝ))]
+      have ht2 : (D.R.t : ℝ) ≤ (D.R.t : ℝ) ^ 2 := le_self_pow₀ (by linarith) two_ne_zero
+      have ht3 : 132 * (D.R.t : ℝ) ^ 2 ≤ (D.R.t : ℝ) ^ 3 := by
+        simpa [pow_succ, mul_comm] using mul_le_mul_of_nonneg_right t132 (sq_nonneg (D.R.t : ℝ))
+      linarith [this, kt, t132, ht2, ht3,
+        show (D.R.t : ℝ) * (D.R.t + 1) = (D.R.t : ℝ) ^ 2 + D.R.t by ring]
     have m' : (D.R.m : ℝ) ≤ D.R.t := by linarith
     calc (D.R.m : ℝ) * D.R.f * (D.R.N D.R.m : ℝ) ^ 2 * D.host.d ≤ D.R.t * D.R.t * ((D.R.t : ℝ) ^ 3) ^ 2 * D.host.d := by gcongr
       _ = D.host.d * (D.R.t : ℝ) ^ 8 := by ring

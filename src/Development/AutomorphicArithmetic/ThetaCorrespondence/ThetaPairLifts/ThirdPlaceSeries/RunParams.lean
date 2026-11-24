@@ -90,15 +90,16 @@ theorem run_params_alt : _root_.GlobalTheory.CovTop.SizeCondition → _root_.Glo
   have hq : (1 : ℝ) ≤ (Fm.D x ι).host.q := by exact_mod_cast (Fm.D x ι).host.hyp.1.one_lt.le
   have hd' : (1 : ℝ) ≤ (Fm.D x ι).host.d := by exact_mod_cast (Fm.D x ι).host.hyp.2.1.one_lt.le
   have hn : (1 : ℝ) ≤ (Fm.D x ι).R.n := by exact_mod_cast (Fm.D x ι).R.ord_pos
-  have hqd : (1 : ℝ) ≤ ((Fm.D x ι).host.q : ℝ) * (Fm.D x ι).host.d := by nlinarith
+  have hqd : (1 : ℝ) ≤ ((Fm.D x ι).host.q : ℝ) * (Fm.D x ι).host.d := one_le_mul_of_one_le_of_one_le hq hd'
   have hs : Real.sqrt (((Fm.D x ι).host.q : ℝ) * (Fm.D x ι).host.d) ≤ ((Fm.D x ι).host.q : ℝ) * (Fm.D x ι).host.d := by
     rw [Real.sqrt_le_left (by linarith)]
-    nlinarith
+    exact le_self_pow₀ hqd (by norm_num)
   have hc : (Fm.D x ι).host.rdE ≤ szCond (Fm.L x ι) := by
     unfold szCond
     exact UpperTheory.Ram.Rd.rdE_le_cond _
   have hc1 : (1 : ℝ) ≤ szCond (Fm.L x ι) := h1.trans hc
-  have hsb : Real.sqrt (Fm.L x ι).sc.b ≤ (Fm.L x ι).sc.b := Real.sqrt_le_iff.2 ⟨by linarith, by nlinarith⟩
+  have hsb : Real.sqrt (Fm.L x ι).sc.b ≤ (Fm.L x ι).sc.b :=
+    Real.sqrt_le_iff.2 ⟨by linarith, le_self_pow₀ hb1 (by norm_num)⟩
   have hrdb : (Fm.D x ι).host.rdE ≤ (Fm.L x ι).sc.b := by
     have e1 : (Fm.D x ι).host.rdE ≤ szCond (Fm.L x ι) ^ 36 * ((Fm.D x ι).R.t : ℝ) ^ 150 :=
       hc.trans ((le_self_pow₀ hc1 (by norm_num)).trans
@@ -136,8 +137,8 @@ theorem run_params_alt : _root_.GlobalTheory.CovTop.SizeCondition → _root_.Glo
   ·
     have hZ1 : (1 : ℝ) ≤ zBase (Fm.L x ι) := by
       unfold zBase
-      have := mul_le_mul hfR hrR (by norm_num) (by linarith)
-      nlinarith
+      exact one_le_mul_of_one_le_of_one_le
+        (one_le_mul_of_one_le_of_one_le (by linarith) (by linarith)) (by linarith)
     have hZ : zBase (Fm.L x ι) ^ 2 ≤ (Fm.parT x hx ι).PP :=
       (pow_le_pow_right₀ hZ1 (by norm_num)).trans hN.ppLow
     have hD1 : (1 : ℝ) ≤ (dimFlag (dat p i) : ℝ) := by
@@ -159,10 +160,11 @@ theorem run_params_alt : _root_.GlobalTheory.CovTop.SizeCondition → _root_.Glo
       have e0 : 0 ≤ PP * T := mul_nonneg hPP0 hT0
       have e1 : PP * T * 1 ≤ PP * T * Dd ^ 2 := mul_le_mul_of_nonneg_left (one_le_pow₀ hD1) e0
       have e2 : PP * T * Dd ^ 2 * 1 ≤ PP * T * Dd ^ 2 * L := mul_le_mul_of_nonneg_left (by linarith) (by positivity)
-      nlinarith
+      grind
     have hU : (Fm.L x ι).sc.b ≤ unitE p := by
       rw [hW.unit]
-      have e1 : (1 : ℝ) ≤ (Fm.D x ι).R.f * (Fm.D x ι).R.m := by nlinarith
+      have e1 : (1 : ℝ) ≤ (Fm.D x ι).R.f * (Fm.D x ι).R.m :=
+        one_le_mul_of_one_le_of_one_le (by linarith) (by linarith)
       have e2 : (1 : ℝ) ≤ (Fm.D x ι).R.f * (Fm.D x ι).R.m * (Fm.L x ι).sc.L * Real.log (Real.log (Fm.L x ι).sc.x) := by
         have := mul_le_mul e1 (by linarith : (1 : ℝ) ≤ (Fm.L x ι).sc.L) zero_le_one (by linarith)
         have := mul_le_mul this hLL zero_le_one (by linarith)
@@ -170,7 +172,7 @@ theorem run_params_alt : _root_.GlobalTheory.CovTop.SizeCondition → _root_.Glo
       have : (Fm.L x ι).sc.b * 1 ≤ (Fm.L x ι).sc.b *
           ((Fm.D x ι).R.f * (Fm.D x ι).R.m * (Fm.L x ι).sc.L * Real.log (Real.log (Fm.L x ι).sc.x)) :=
         mul_le_mul_of_nonneg_left e2 (by linarith)
-      nlinarith
+      grind
     have hPz : GlobalTheory.EtaAn.p16 (Fm.D x ι).host.E (Fm.D x ι).R.r ((Fm.D x ι).host.g 0 * (Fm.D x ι).host.g 1)
         (Fm.D x ι).R.m 5 1 ≤ 200000 * zBase (Fm.L x ι) ^ 2 := hP.2
     calc (lenT p i (Fm.parT x hx ι).PP : ℝ) * GlobalTheory.EtaAn.p16 (Fm.D x ι).host.E (Fm.D x ι).R.r
@@ -188,7 +190,8 @@ theorem run_params_alt : _root_.GlobalTheory.CovTop.SizeCondition → _root_.Glo
       (Fm.D x ι).R.r DF ((Fm.D x ι).host.g 0) ((Fm.D x ι).host.g 1) h1 hc sC ht (by linarith) hft (by linarith) hrt
       hDF1 hDFb (hg 0) (hg 1)
     have hrun := GlobalTheory.RunParametersOfLower.runOK_of_le (Fm.D x ι).host.E (Fm.D x ι).R.r DF
-      ((Fm.D x ι).host.g 0 * (Fm.D x ι).host.g 1) (Fm.D x ι).R.m hDF (by rw [ef]; nlinarith) (by omega) hm4 hf2 hrd16
+      ((Fm.D x ι).host.g 0 * (Fm.D x ι).host.g 1) (Fm.D x ι).R.m hDF
+      (by rw [ef]; exact (show 2 ≤ 8 * 6 by norm_num).trans (Nat.mul_le_mul hf8 a5.2.2)) (by omega) hm4 hf2 hrd16
       (by unfold ReciprocityTheory.ChartRestriction.G.I2.RR; rw [ef, erd]; push_cast; exact key)
     rw [ef] at hrun
     exact hrun
@@ -197,7 +200,7 @@ theorem run_params_alt : _root_.GlobalTheory.CovTop.SizeCondition → _root_.Glo
     have hR0 : (1 : ℝ) ≤ Real.sqrt (90 * ((Fm.D x ι).R.f * (Fm.D x ι).R.r + DF)) ^ 2 := by
       rw [Real.sq_sqrt (by positivity)]
       have : (0 : ℝ) ≤ DF := Nat.cast_nonneg _
-      nlinarith
+      linarith [mul_le_mul hfR hrR (by norm_num) (by linarith)]
     have hRR : (1 : ℝ) ≤ ReciprocityTheory.ChartRestriction.G.I2.RR (E := (Fm.D x ι).host.E) := by
       unfold ReciprocityTheory.ChartRestriction.G.I2.RR; exact one_le_pow₀ (by linarith)
     have := sqrt_lt_th_real ((Fm.D x ι).host.g 0 * (Fm.D x ι).host.g 1) (Y.d.l₂.M : ℝ)

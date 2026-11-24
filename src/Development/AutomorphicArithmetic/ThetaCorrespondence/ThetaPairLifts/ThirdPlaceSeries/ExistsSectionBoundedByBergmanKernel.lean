@@ -415,13 +415,21 @@ theorem twist_cost_le {f r p q L om PP : ℝ} (hf : 1 ≤ f) (hr : 1 ≤ r) (hL 
   have h3 : f * r * L * r ≤ PP := by
     refine le_trans ?_ ((pow_le_pow_right₀ hZ (by norm_num : 2 ≤ 12)).trans hP)
     rw [sq]
-    exact mul_le_mul_of_nonneg_left (by nlinarith) (by linarith)
+    exact mul_le_mul_of_nonneg_left
+      ((le_mul_of_one_le_left (by linarith) hf).trans (le_mul_of_one_le_right (by linarith) hL))
+      (by linarith)
   have h4 : f * r * r ≤ f * r * L * r := by
     have : f * r ≤ f * r * L := le_mul_of_one_le_right (by linarith) hL
     exact mul_le_mul_of_nonneg_right this (by linarith)
   have h5 := mul_le_mul_of_nonneg_left h1 (show 0 ≤ f * r * r by positivity)
   have h6 := mul_le_mul_of_nonneg_left h2 (show 0 ≤ f * r by positivity)
-  nlinarith
+  have hPP0 : 0 ≤ PP := le_trans (by positivity) h3
+  linarith [h3, h4, h5, h6, hPP0,
+    show 3 * r * (2 * (f * r) * Real.log (2 * Real.pi)) / 8 =
+      3 / 4 * (f * r * r * Real.log (2 * Real.pi)) by ring,
+    show -(12 * r * (f * ((p - q) / 2 * om)) / 8) =
+      3 / 2 * (f * r * -((p - q) / 2 * om)) by ring,
+    show f * r * (r / 2 * (3 * L)) = 3 / 2 * (f * r * L * r) by ring]
 
 
 end GlobalTheory.CovHt.KeySection
@@ -734,7 +742,7 @@ theorem theta_sup_le (hLw : Laws D j Xo c U dict) {σ : c.F →+* ℂ} (hσ : Go
       have h2 : (1 : ℝ) ≤ D.R.r := by exact_mod_cast hr1
       have := hpow (D.R.f * D.R.r) 1 (by positivity) (by simpa using hfr)
       rw [pow_one] at this
-      nlinarith
+      exact (le_mul_of_one_le_right (by linarith) h2).trans this
     · have := hpow κ 20 (by linarith) (by exact_mod_cast hsz)
       linarith
   have hlam : ((Real.exp L ^ 40)⁻¹) ^ 2 ≤ ((U σ).X k).firstMinimumSq xf.1 := by
@@ -872,7 +880,7 @@ theorem thetaDegreeConst_le_three_mul_cube (E : Type) [Field E] [NumberField E] 
     mul_le_mul (by linarith) h3 (Real.log_nonneg (by norm_num)) (by linarith)
   have h7 : 1000 * b ≤ b ^ 2 := by rw [sq]; gcongr
   have h8 : 1000 * b ^ 2 ≤ b ^ 3 := by rw [pow_succ' b 2]; gcongr
-  nlinarith
+  grind
 
 theorem cc_le {b n m d R M : ℝ} (hb : 1000 ≤ b) (hn0 : 0 ≤ n) (hm0 : 0 ≤ m) (hd0 : 0 ≤ d) (hR0 : 0 ≤ R) (hn : n ≤ b)
     (hm : m ≤ b) (hd : d ≤ 2 * b) (hR : R ≤ b) (hM : b ^ 16 ≤ M) :
@@ -884,7 +892,7 @@ theorem cc_le {b n m d R M : ℝ} (hb : 1000 ≤ b) (hn0 : 0 ≤ n) (hm0 : 0 ≤
     exact Real.pi_le_four
   have h2 : (1000 : ℝ) ^ 6 * b ^ 10 ≤ b ^ 6 * b ^ 10 := by gcongr
   have h3 : 0 ≤ b ^ 10 := by positivity
-  nlinarith
+  grind
 
 theorem loss_le {b φ d N lM z : ℝ} (hb : 1000 ≤ b) (hφ : b ^ 14 ≤ φ) (hd0 : 0 ≤ d) (hd : d ≤ b ^ 2) (hN0 : 0 ≤ N) (hN : N ≤ b)
     (hM0 : 0 ≤ lM) (hM : lM ≤ 70 * b) (hz0 : 0 ≤ z) (hz : z ≤ b * (3 * b)) :
@@ -900,7 +908,7 @@ theorem loss_le {b φ d N lM z : ℝ} (hb : 1000 ≤ b) (hφ : b ^ 14 ≤ φ) (h
   have h6 : b ^ 5 ≤ b ^ 6 := pow_le_pow_right₀ hb1 (by norm_num)
   have h7 : (1000 : ℝ) ^ 8 * b ^ 6 ≤ b ^ 8 * b ^ 6 := by gcongr
   have h8 : 0 ≤ b ^ 6 := by positivity
-  nlinarith
+  grind
 
 
 
@@ -991,7 +999,8 @@ theorem core_ratio (hLw : Laws D j Xo c U dict) (α : 𝓞 D.host.E) (hα : α *
     exact absurd hq (not_le.2 (Real.exp_pos _))
   · have hz := theta_sup_le hLw hσ hDom hnab hP (hg q) (hcusp q) (L := 3 * Real.log b) (κ := b ^ 2) (by linarith) hrn
       (by linarith) ((Real.log_le_log (show 0 < D.host.rdE by linarith) hrdb).trans (by linarith))
-      ((Real.log_le_log (by positivity) hfr).trans (by linarith)) hDF (by nlinarith)
+      ((Real.log_le_log (by positivity) hfr).trans (by linarith)) hDF
+      (hfrn.trans (by linarith [le_self_pow₀ hb1 two_ne_zero]))
       (by rw [Real.log_pow]; push_cast; linarith) hρ z
     refine le_of_mul_le_mul_left ?_ (Real.exp_pos (-(((Formalism.L2.Pj.DF Dw a : ℕ) : ℝ) / 2) * Real.log (Real.pi * (2 * xiR D))))
     rw [mul_left_comm]
@@ -1280,7 +1289,13 @@ private theorem card_mul_succ_le_two_mul_ncol_copy {E : Type} [Field E] [NumberF
   rw [GlobalTheory.RawThetaSup.sum_emb_eq H, Finset.mul_sum, mul_assoc, ← Finset.card_univ, ← smul_eq_mul, ← Finset.sum_const]
   refine Finset.sum_le_sum fun τ _ => ?_
   rw [Datum.mult, if_pos τ.2, Datum.mult, if_neg (conj_not_mem τ)]
-  nlinarith [sq_nonneg ((Dw.p : ℤ) - Dw.q)]
+  zify
+  linarith [sq_nonneg ((Dw.p : ℤ) - Dw.q),
+    show ((Dw.p : ℤ) - Dw.q) ^ 2 = (Dw.p : ℤ) ^ 2 - 2 * Dw.p * Dw.q + (Dw.q : ℤ) ^ 2 by ring,
+    show ((Dw.p : ℤ) + Dw.q) * ((Dw.p : ℤ) + Dw.q + 1) =
+      (Dw.p : ℤ) ^ 2 + 2 * Dw.p * Dw.q + (Dw.q : ℤ) ^ 2 + Dw.p + Dw.q by ring,
+    show 2 * ((Dw.p : ℤ) * (Dw.p + 1) + (Dw.q : ℤ) * (Dw.q + 1)) =
+      2 * (Dw.p : ℤ) ^ 2 + 2 * (Dw.q : ℤ) ^ 2 + 2 * Dw.p + 2 * Dw.q by ring]
 private theorem one_le_dimension_function_copy {E : Type} [Field E] [NumberField E] [IsCMField E] {H : ReciprocityTheory.ChartRestriction.G.Geo.Tor.Host E} (Dw : Datum H)
     (hp : 1 ≤ Dw.p) (hne : 0 < Fintype.card (Psi H)) {a : (E →+* ℂ) × ℕ → ℕ} (h : LastPos Dw a) :
     1 ≤ Formalism.L2.Pj.DF Dw a := by
@@ -1298,7 +1313,11 @@ private theorem frn_le_pow_of_bounds_copy {f r n t : ℝ} (ht : 11 ≤ t) (hf0 :
   have h2 : n ≤ t ^ 4 := by
     have : 11 * t ^ 3 ≤ t ^ 4 := by rw [pow_succ' t 3]; gcongr
     have : 11 * t ^ 2 ≤ t ^ 3 := by rw [pow_succ' t 2]; gcongr
-    nlinarith
+    have ht2 : (121 : ℝ) ≤ t ^ 2 := by
+      calc (121 : ℝ) = 11 ^ 2 := by norm_num
+        _ ≤ t ^ 2 := pow_le_pow_left₀ (by norm_num) ht 2
+    linarith [h1, ht, ht2, show 2 * t * (t * t) = 2 * t ^ 3 by ring,
+      show 8 * (t * t) = 8 * t ^ 2 by ring]
   calc f * r * n ≤ f * r * t ^ 4 := by gcongr
     _ ≤ t * t * t ^ 4 := by gcongr
     _ = t ^ 6 := by ring
@@ -1564,7 +1583,7 @@ theorem bergman_kernel_bound_thin_part_alt : _root_.GlobalTheory.CovTop.Publishe
     by_cases hz : (⟨z.1, z.2.1⟩ : Σ k, Frame ((Y.U σ).X k).Ψ (Fm.D x ι).R.r) ∈ framesOn (Y.U σ) Z
     · rw [hgK _ hz, hgy]
       have := hfb z hz
-      nlinarith
+      exact (le_of_eq (by ring)).trans (mul_le_mul_of_nonneg_left this hK.le)
     · have h0 : rdU (Y.U σ) g z.1 z.2.1 = 0 := rdU_eq_zero (Y.U σ) hgS hz
       have hz0 : ptN (modelWt (Y.U σ) (wtOf (dat p i) u1 0)) (rdU (Y.U σ) g) ⟨z.1, z.2.1⟩ = 0 := by
         simp only [ptN, Data.pnorm, h0, norm_zero, zero_mul]
