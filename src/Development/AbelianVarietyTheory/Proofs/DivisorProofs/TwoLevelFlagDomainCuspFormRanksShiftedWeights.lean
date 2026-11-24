@@ -270,7 +270,9 @@ theorem quotT_far (hf : X.IsBddSec (Xa.Fp + T • Xa.L) f)
   rw [div_lt_iff₀ (Real.exp_pos _)]
   have h8 := Real.add_one_le_exp (β * Xa.ph x)
   rw [hM, div_lt_iff₀ (by positivity)] at hbig
-  nlinarith
+  have h9 := mul_le_mul_of_nonneg_left h8 hε.le
+  linarith [hbig, h9, show Xa.ph x * (ε * β) = ε * (β * Xa.ph x) by ring,
+    show ε * (β * Xa.ph x + 1) = ε * (β * Xa.ph x) + ε by ring]
 
 theorem exists_maxT (hf : X.IsBddSec (Xa.Fp + T • Xa.L) f)
     (hrate : 0 < 4 / (Xa.g0 : ℝ) - 2 * Xa.c * ((T : ℝ) + nd X + 6 + 1 / 2))
@@ -432,14 +434,18 @@ theorem rate_shift {X : Data E r} (Xa : ArchInM X) :
   have hT : (2 * nd X : ℝ) + 11 ≤ Xa.T := by
     have h1 := Xa.T_ge
     have h2 := Xa.n_ge
-    have : 2 * nd X + 11 ≤ Xa.T := by nlinarith
+    have hsq : 2 * nd X ≤ nd X ^ 2 := by rw [sq]; exact Nat.mul_le_mul_right _ h2
+    have : 2 * nd X + 11 ≤ Xa.T := by omega
     exact_mod_cast this
   have hn : (0 : ℝ) ≤ nd X := Nat.cast_nonneg _
   have h1 : (Xa.T : ℝ) * Xa.c * Xa.g0 ≤ 1 := Xa.Tcg0
   set y : ℝ := Xa.c * Xa.g0 with hy
   have hy0 : 0 < y := by positivity
   have h2 : y * (2 * nd X + 21 / 2) < y * Xa.T := mul_lt_mul_of_pos_left (by linarith) hy0
-  have h3 : 2 * y * ((Xa.T : ℝ) + 2 * nd X + 21 / 2) < 4 := by nlinarith
+  have h3 : 2 * y * ((Xa.T : ℝ) + 2 * nd X + 21 / 2) < 4 := by
+    linarith [h1, h2, show (Xa.T : ℝ) * Xa.c * Xa.g0 = y * Xa.T by rw [hy]; ring,
+      show 2 * y * ((Xa.T : ℝ) + 2 * nd X + 21 / 2) =
+        2 * (y * Xa.T) + 2 * (y * (2 * nd X + 21 / 2)) by ring]
   have h4 : 4 / (Xa.g0 : ℝ) - 2 * Xa.c * (((Xa.T + (nd X + 4) : ℕ) : ℝ) + nd X + 6 + 1 / 2) =
       (4 - 2 * y * ((Xa.T : ℝ) + 2 * nd X + 21 / 2)) / Xa.g0 := by
     rw [hy]; push_cast; field_simp; ring
@@ -723,7 +729,7 @@ theorem cross (X : Data E r) {L : Wt X.Ψ r} (hg : GapsGe X.p0 L 1) {T : ℕ} (h
     have : (0 : ℝ) ≤ (i : ℕ) := Nat.cast_nonneg _
     linarith
   push_cast at hm ⊢
-  nlinarith
+  linarith
 
 theorem gaps_G (X : Data E r) {L : Wt X.Ψ r} (hg : GapsGe X.p0 L 1) (n s : ℕ) :
     GlobalTheory.IndefiniteRowSideFullHecke.ThetaWeightedNorm.GapsGe X (n • L - 2 • deMul X.Ψ r X.p0 s) 0 := by
@@ -768,7 +774,9 @@ theorem pair_G (X : Data E r) {L : Wt X.Ψ r} {T : ℕ} (hp : PairGe L (1.9 * T)
   have hn' : (6 : ℝ) ≤ n := by exact_mod_cast hn
   have hT' : (1 : ℝ) ≤ T := by exact_mod_cast hT
   push_cast at hpp ⊢
-  nlinarith
+  have hm1 := mul_le_mul_of_nonneg_left hpp (by linarith : (0 : ℝ) ≤ n)
+  have hm2 := mul_le_mul_of_nonneg_right hn' (by linarith : (0 : ℝ) ≤ 1.9 * T)
+  linarith [hm1, hm2, show (n : ℝ) * ((L τ i1 : ℝ) - L τ i0) = n * L τ i1 - n * L τ i0 by ring]
 
 theorem card_mul_le_nd (X : Data E r) : X.Ψ.card * (r - 1) ≤ nd X := by
   let f : X.Ψ × Fin (r - 1) → Ent X := fun p =>
@@ -789,14 +797,22 @@ theorem size_le (c n R T : ℕ) (hc : 1 ≤ c) (hR : 2 ≤ R) (hn : 2 ≤ n) (hc
   simp only [Nat.add_sub_cancel] at hcn
   have he : 1 ≤ e := by omega
   have h1 : c * e * (c * e) ≤ n * n := Nat.mul_le_mul hcn hcn
-  have h2a : (e + 1) ^ 2 ≤ 4 * (e * e) := by nlinarith
+  have h2a : (e + 1) ^ 2 ≤ 4 * (e * e) := by
+    calc (e + 1) ^ 2 ≤ (2 * e) ^ 2 := Nat.pow_le_pow_left (by omega) 2
+      _ = 4 * (e * e) := by ring
   have h2 : c * (e + 1) ^ 2 ≤ 4 * (c * e * (c * e)) :=
     calc c * (e + 1) ^ 2 ≤ c * (4 * (e * e)) := Nat.mul_le_mul_left _ h2a
       _ ≤ (c * c) * (4 * (e * e)) := Nat.mul_le_mul_right _ (Nat.le_mul_self c)
       _ = 4 * (c * e * (c * e)) := by ring
-  have h3 : 2 * (e + 1) ≤ 4 * n := by nlinarith
-  have h4 : 4 * n ≤ 2 * (n * n) := by nlinarith
-  nlinarith
+  have h3 : 2 * (e + 1) ≤ 4 * n := by
+    have : e ≤ n := le_trans (Nat.le_mul_of_pos_left e hc) hcn
+    omega
+  have h4 : 4 * n ≤ 2 * (n * n) := by
+    calc 4 * n = 2 * (2 * n) := by ring
+      _ ≤ 2 * (n * n) := Nat.mul_le_mul_left 2 (Nat.mul_le_mul_right n hn)
+  rw [sq] at hT
+  rw [Nat.mul_assoc]
+  omega
 
 end GlobalTheory.ShareSection
 
@@ -813,7 +829,9 @@ theorem exists_bddSec_shift : ∀ (E : Type) [Field E] [NumberField E] [IsCMFiel
   intro E _ _ _ r X Xa Fl _ h0 hr hg hp _ _ s _ hsT _ _ _
   have hn := Xa.n_ge
   have hT := Xa.T_ge
-  have hT1 : 1 ≤ Xa.T := le_trans (by nlinarith) hT
+  have hT1 : 1 ≤ Xa.T := by
+    have : 4 ≤ nd X.toData ^ 2 := by rw [sq]; exact Nat.mul_le_mul hn hn
+    omega
 
   have hδ : 0 < Fl.δ := by
     rcases Nat.eq_zero_or_pos Fl.δ with h | h
@@ -877,7 +895,7 @@ theorem exists_bddSec_shift : ∀ (E : Type) [Field E] [NumberField E] [IsCMFiel
           leviO X.toData x0 (phla X.toData ((nd X.toData + 4) • Xa.L - 2 • deMul X.Ψ r X.p0 s)) z ξ -
             leviDens X.toData x0 z ξ - (nd X.toData : ℝ) * leviO X.toData x0 (phla X.toData Xa.L) z ξ := by
     refine ⟨4 * (X.Ψ.card : ℝ) * (r : ℝ) ^ 2 + 1, (4 : ℕ) * (1.9 * Xa.T) - 2 * Xa.T - 2 * ((r : ℝ) - 1),
-      by linarith, by push_cast; nlinarith, fun x0 ho z hz ξ => ?_⟩
+      by linarith, by push_cast; linarith, fun x0 ho z hz ξ => ?_⟩
     have h := (GlobalTheory.CurvMarginClosed.curv_and_margin_closed (E := E)).2 r X.toData
       (4 • Xa.L - 2 • deMul X.Ψ r X.p0 s - kapW X.toData) _ (block_fst X.toData hg 4 s)
       (block_snd X.toData hg 4 s) (cross X.toData hg hp 4 s hsT hr) x0 ho z hz ξ
@@ -898,7 +916,7 @@ theorem exists_bddSec_shift : ∀ (E : Type) [Field E] [NumberField E] [IsCMFiel
       intro τ i j hi hj
       have := cross X.toData hg hp 3 s hsT hr τ i j hi hj
       push_cast at this
-      nlinarith
+      linarith [show (0 : ℝ) ≤ 4 * (X.Ψ.card : ℝ) * (r : ℝ) ^ 2 by positivity]
     have h := (GlobalTheory.CurvMarginClosed.curv_and_margin_closed (E := E)).2 r X.toData
       (3 • Xa.L - 2 • deMul X.Ψ r X.p0 s - kapW X.toData) 0 (block_fst X.toData hg 3 s)
       (block_snd X.toData hg 3 s) hc3 x0 ho z hz ξ
@@ -1002,7 +1020,9 @@ theorem first_ratio (T n : ℕ) (hn : 2 ≤ n) (hT : 11 * n ^ 2 ≤ T) :
   have hnx : (n : ℝ) * x ≤ 0.65 := by
     rw [hx, mul_div_assoc', div_le_iff₀ hT1]
     push_cast
-    nlinarith
+    have hn2 : 2 * (n : ℝ) ≤ (n : ℝ) ^ 2 := by
+      simpa [sq] using mul_le_mul_of_nonneg_right hnR (by linarith : (0 : ℝ) ≤ n)
+    linarith [show (n : ℝ) * (2 * (n : ℝ) + 10) = 2 * (n : ℝ) ^ 2 + 10 * n by ring]
   have hpow : (1 + x) ^ n ≤ 2 := by
     calc (1 + x) ^ n ≤ (Real.exp x) ^ n := by
           apply pow_le_pow_left₀ (by positivity)
@@ -1034,9 +1054,15 @@ theorem second_ratio (T n : ℕ) (hn : 2 ≤ n) (hT : 11 * n ^ 2 ≤ T) :
   have hf : (0 : ℝ) < ((n.factorial : ℕ) : ℝ) := by exact_mod_cast Nat.factorial_pos n
   have hnR : (2 : ℝ) ≤ n := by exact_mod_cast hn
   have hTR : (11 : ℝ) * n ^ 2 ≤ T := by exact_mod_cast hT
-  have hT0 : 0 < T := by nlinarith
+  have hT0 : 0 < T := by
+    have : 4 ≤ n ^ 2 := by rw [sq]; exact Nat.mul_le_mul hn hn
+    omega
   have hTR0 : (0 : ℝ) < T := by exact_mod_cast hT0
-  have hc : (((n + 6 : ℕ)) : ℝ) ≤ T := by push_cast; nlinarith
+  have hc : (((n + 6 : ℕ)) : ℝ) ≤ T := by
+    push_cast
+    have hn2 : 2 * (n : ℝ) ≤ (n : ℝ) ^ 2 := by
+      simpa [sq] using mul_le_mul_of_nonneg_right hnR (by linarith : (0 : ℝ) ≤ n)
+    linarith
   have hA := fact_mul_choose_eq_prod T (n + 6) n
   have hB := fact_mul_choose_eq_prod T 0 n
   have hL := prod_lower T (n + 6) n hc hT0

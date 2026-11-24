@@ -120,7 +120,7 @@ theorem nums {D : D7} {L : SizeData₂ D} (h : SizesAt L) :
     linarith
   have hl3 : (D.R.m : ℝ) * L.sc.b / D.R.k ≤ L.sc.b := by
     rw [div_le_iff₀ (by linarith)]
-    nlinarith
+    exact (mul_le_mul_of_nonneg_right hmk hb.le).trans_eq (mul_comm _ _)
   have hw : L.sc.w'' D.R.n ≤ L.sc.b' :=
     div_le_self hb'.le (one_le_mul_of_one_le_of_one_le hx1.le hn)
   have hw0 : 0 < L.sc.w'' D.R.n := div_pos hb' (by positivity)
@@ -128,7 +128,9 @@ theorem nums {D : D7} {L : SizeData₂ D} (h : SizesAt L) :
     have a := hEta.2.2.2.1
     rw [le_div_iff₀ hx] at a
     have a2 : L.etaSz ≤ D.R.t * L.etaSz := le_mul_of_one_le_left hη.le ht
-    nlinarith
+    calc L.sc.x * L.etaSz = L.etaSz * L.sc.x := mul_comm _ _
+      _ ≤ D.R.t * L.etaSz * L.sc.x := mul_le_mul_of_nonneg_right a2 hx.le
+      _ ≤ L.sc.w'' D.R.n := a
   have hN3 : 4 * (D.R.N D.R.m : ℝ) ^ 3 + 6 ≤ L.etaSz := by
     have := hNodes.2.2.2.1
     linarith
@@ -137,10 +139,15 @@ theorem nums {D : D7} {L : SizeData₂ D} (h : SizesAt L) :
   rw [pow_one] at a4
   refine ⟨?_, by linarith, by linarith, ?_, by unfold Nm; linarith, by unfold Nm; linarith, ?_, ?_, ?_, ?_, hw, hw0⟩
   · rw [le_div_iff₀ (by linarith)] at hl2
-    nlinarith
+    calc (D.R.k : ℝ) * (L.sc.b' + L.etaSz)
+        = (L.sc.b' + L.etaSz) * D.R.k := mul_comm _ _
+      _ ≤ (L.sc.b' + L.Sc + L.etaSz) * D.R.k :=
+          mul_le_mul_of_nonneg_right (by linarith) (by linarith)
+      _ ≤ D.R.m * L.sc.b := hl2
   · unfold Scale.X'' Scale.a
     rw [div_mul_eq_mul_div, div_le_iff₀ hw0]
-    nlinarith
+    calc L.sc.x * L.sc.b * L.etaSz = L.sc.b * (L.sc.x * L.etaSz) := by ring
+      _ ≤ L.sc.b * L.sc.w'' D.R.n := mul_le_mul_of_nonneg_left hxη hb.le
   · have a := hNodes.2.1
     have a2 : L.sc.L ≤ D.R.k * D.R.t * L.sc.L :=
       le_mul_of_one_le_left (by linarith) (one_le_mul_of_one_le_of_one_le hk ht)
@@ -154,7 +161,8 @@ theorem nums {D : D7} {L : SizeData₂ D} (h : SizesAt L) :
     calc _ ≤ _ := a3
       _ = L.etaSz * ((D.R.t : ℝ) ^ 3 * D.R.f * (D.R.k : ℝ) ^ 3) := by ring
       _ ≤ _ := a1
-  · have : L.sc.x * 2 ≤ L.sc.x * L.etaSz := mul_le_mul_of_nonneg_left (by nlinarith) hx.le
+  · have : L.sc.x * 2 ≤ L.sc.x * L.etaSz :=
+      mul_le_mul_of_nonneg_left (by linarith [pow_nonneg (by linarith : (0 : ℝ) ≤ D.R.N D.R.m) 3]) hx.le
     linarith
   · intro t
     have hLa0 : 0 ≤ L.LaG := le_trans (by positivity) hLa.1
@@ -225,11 +233,14 @@ theorem nP_le_f (D : D7) (p : ℕ) : nP D p ≤ D.R.f := by
 
 theorem gam_bounds {p : ℕ} (hp : 2 ≤ p) : 0 ≤ gam p ∧ gam p ≤ 2 / p := by
   have h : (2 : ℝ) ≤ p := by exact_mod_cast hp
-  have h1 : (0 : ℝ) < (p : ℝ) ^ 2 - 1 := by nlinarith
+  have hp2 : (4 : ℝ) ≤ (p : ℝ) ^ 2 := by
+    calc (4 : ℝ) = 2 ^ 2 := by norm_num
+      _ ≤ (p : ℝ) ^ 2 := pow_le_pow_left₀ (by norm_num) h 2
+  have h1 : (0 : ℝ) < (p : ℝ) ^ 2 - 1 := by linarith
   unfold gam
   refine ⟨by positivity, ?_⟩
   rw [div_le_div_iff₀ h1 (by linarith)]
-  nlinarith
+  linarith [hp2, show (p : ℝ) * p = (p : ℝ) ^ 2 by ring]
 
 theorem first_term {D : D7} {L : SizeData₂ D} (h : SizesAt L) {j : ℕ} (hj : j ∈ SizeData₂.lifts D) {p : ℕ} (hp : 2 ≤ p) :
     max 0 ((∑ z ∈ kindA D p, FOrb D j p z) / (nP D p : ℝ)) ≤ 6 * (D.R.f * D.R.m * L.sc.b) / p := by
@@ -252,7 +263,11 @@ theorem first_term {D : D7} {L : SizeData₂ D} (h : SizesAt L) {j : ℕ} (hj : 
       obtain ⟨c0, -, c1⟩ := wPl_bounds h hj (posPl D p z s.val)
       have c2 := c1 (by simp [posPl, partner, hs, hz1])
       have c3 := (nums h).1
-      nlinarith
+      calc ((D.R.k : ℝ) - 1) * wPl D j (posPl D p z s.val)
+          ≤ (D.R.k : ℝ) * (3 * (L.sc.b' + L.etaSz)) :=
+            mul_le_mul (by linarith) c2 c0 (by linarith)
+        _ = 3 * ((D.R.k : ℝ) * (L.sc.b' + L.etaSz)) := by ring
+        _ ≤ 3 * (D.R.m * L.sc.b) := mul_le_mul_of_nonneg_left c3 (by norm_num)
     rw [Finset.sum_const, Finset.card_univ, ZMod.card, nsmul_eq_mul] at b
     calc _ ≤ gam p * ((nP D p : ℝ) * (3 * (D.R.m * L.sc.b))) := mul_le_mul_of_nonneg_left b g0
       _ ≤ 2 / p * ((nP D p : ℝ) * (3 * (D.R.m * L.sc.b))) := mul_le_mul_of_nonneg_right g1 (by positivity)
@@ -633,8 +648,11 @@ theorem sum_primes_le (P : Finset ℕ) (hP : ∀ p ∈ P, p.Prime) (n : ℕ) (X 
       (if (p : ℝ) ≤ X then A * Real.log a + 2 * (W * Real.log a) * ((p : ℝ) ^ 2)⁻¹ else 0) := by
     intro p hp
     have h2 : (2 : ℝ) ≤ p := by exact_mod_cast (hP p hp).two_le
+    have hp2 : (4 : ℝ) ≤ (p : ℝ) ^ 2 := by
+      calc (4 : ℝ) = 2 ^ 2 := by norm_num
+        _ ≤ (p : ℝ) ^ 2 := pow_le_pow_left₀ (by norm_num) h2 2
     have hl : 0 < Real.log p := Real.log_pos (by linarith)
-    have hq : 0 < (p : ℝ) ^ 2 - 1 := by nlinarith
+    have hq : 0 < (p : ℝ) ^ 2 - 1 := by linarith
     split_ifs with h
     · have hb : 0 ≤ Real.logb p a := Real.logb_nonneg (by linarith) ha
       rw [abs_of_nonneg (by positivity), mul_add, mul_add]
@@ -643,11 +661,14 @@ theorem sum_primes_le (P : Finset ℕ) (hP : ∀ p ∈ P, p.Prime) (n : ℕ) (X 
       have e2 : Real.log p ≤ Real.log a := Real.log_le_log (by linarith) (h.trans hXa)
       have e3 : W / ((p : ℝ) ^ 2 - 1) ≤ 2 * W * ((p : ℝ) ^ 2)⁻¹ := by
         rw [← div_eq_mul_inv, div_le_div_iff₀ hq (by positivity)]
-        have : 0 ≤ (p : ℝ) ^ 2 - 2 := by nlinarith
-        nlinarith [mul_nonneg hW this]
+        have : 0 ≤ (p : ℝ) ^ 2 - 2 := by linarith
+        linarith [mul_nonneg hW this,
+          show W * ((p : ℝ) ^ 2 - 2) = W * (p : ℝ) ^ 2 - 2 * W by ring,
+          show 2 * W * ((p : ℝ) ^ 2 - 1) = 2 * (W * (p : ℝ) ^ 2) - 2 * W by ring]
       have e4 := mul_le_mul e2 e3 (by positivity) hla
       rw [e1]
-      nlinarith
+      linarith [e4, show Real.log a * (2 * W * ((p : ℝ) ^ 2)⁻¹) =
+        2 * (W * Real.log a) * ((p : ℝ) ^ 2)⁻¹ by ring]
     · rw [add_zero, add_zero, abs_of_nonneg (Nat.cast_nonneg _)]
   refine (Finset.sum_le_sum h1).trans ?_
   rw [Finset.sum_add_distrib, ← Finset.sum_filter, add_assoc]

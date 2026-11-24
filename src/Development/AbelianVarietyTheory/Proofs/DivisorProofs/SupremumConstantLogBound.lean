@@ -71,7 +71,7 @@ theorem log_size_bounds_class_number_volume : ∀ f r L lrd lM lh w d D : ℝ, 1
   have lf0 : 0 ≤ log f := log_nonneg hf
   have lr2 : log 2 ≤ log r := log_le_log (by norm_num) hr
   have lLL : log L ≤ L - 1 := log_le_sub_one_of_pos L0
-  have hfL : 1 ≤ f * L := by nlinarith
+  have hfL : 1 ≤ f * L := one_le_mul_of_one_le_of_one_le hf hL
   have l4 : log 4 = 2 * log 2 := by
     rw [show (4:ℝ) = 2^2 by norm_num, log_pow]; norm_num
   have l8 : log 8 = 3 * log 2 := by
@@ -94,7 +94,9 @@ theorem log_size_bounds_class_number_volume : ∀ f r L lrd lM lh w d D : ℝ, 1
     have := mul_le_mul_of_nonneg_left h1 f0.le
     linarith
   have hfM : f * lM ≤ f * (30 * L) := mul_le_mul_of_nonneg_left hM f0.le
-  have r2 : 4 ≤ r ^ 2 := by nlinarith
+  have r2 : 4 ≤ r ^ 2 := by
+    calc (4 : ℝ) = 2 ^ 2 := by norm_num
+      _ ≤ r ^ 2 := pow_le_pow_left₀ (by norm_num) hr 2
   have c3 : log 2 + lh + 2*f*(r^2+1)*lM + f*(r^2-1)/2*lrd ≤ 80*f*r^2*L := by
     have a := mul_le_mul_of_nonneg_left hfM (show 0 ≤ r^2+1 by positivity)
     have b := mul_le_mul_of_nonneg_left hfrd (show 0 ≤ r^2-1 by linarith)
@@ -111,7 +113,9 @@ theorem log_size_bounds_class_number_volume : ∀ f r L lrd lM lh w d D : ℝ, 1
     have : log (1600*r^2/π) ≤ log (1024 * r^2) := by
       apply log_le_log (by positivity)
       rw [div_le_iff₀ pi_pos]
-      nlinarith
+      calc 1600 * r ^ 2 ≤ (1024 * π) * r ^ 2 :=
+            mul_le_mul_of_nonneg_right (by linarith) (sq_nonneg r)
+        _ = 1024 * r ^ 2 * π := by ring
     rw [log_mul (by norm_num) (by positivity), log_pow, l1024] at this
     push_cast at this
     linarith
@@ -119,8 +123,9 @@ theorem log_size_bounds_class_number_volume : ∀ f r L lrd lM lh w d D : ℝ, 1
     rw [hD]; have : 0 ≤ r - 1 := by linarith
     positivity
   have hD1 : D ≤ f * r ^ 2 / 2 := by
-    rw [hD]; have : 0 ≤ f * r := by positivity
-    nlinarith
+    rw [hD]; have hfr0 : 0 ≤ f * r := by positivity
+    have := mul_le_mul_of_nonneg_left (by linarith : r - 1 ≤ r) hfr0
+    linarith [show f * r * r = f * r ^ 2 by ring]
   have h3 : D * log (1600*r^2/π) ≤ f * r^2 / 2 * (9 * L) := by
     calc D * log (1600*r^2/π) ≤ D * (9 * L) := mul_le_mul_of_nonneg_left (by linarith) hD0
       _ ≤ _ := mul_le_mul_of_nonneg_right hD1 (by positivity)
@@ -233,7 +238,7 @@ theorem massLev_size (E : Type) [Field E] [NumberField E] [IsCMField E] (r M : �
   have hlrd : Real.log (rdE E) = Real.log (dE E) / (2 * fdeg E) := by
     rw [hrd, Real.log_rpow hd0]; ring
   have hexp0 : 0 ≤ (fdeg E : ℝ) * ((r : ℝ) ^ 2 - 1) / 2 := by
-    have : (1:ℝ) ≤ (r:ℝ)^2 := by nlinarith
+    have : (1:ℝ) ≤ (r:ℝ)^2 := one_le_pow₀ (by linarith)
     have : 0 ≤ (r:ℝ)^2 - 1 := by linarith
     positivity
   have hm : massLev E r M = 2 * ((classNumber E : ℝ) * (M : ℝ) ^ (2 * fdeg E)) * (M : ℝ) ^ (2 * fdeg E * r ^ 2) *
@@ -243,9 +248,9 @@ theorem massLev_size (E : Type) [Field E] [NumberField E] [IsCMField E] (r M : �
   have hB : 1 ≤ (M : ℝ) ^ (2 * fdeg E * r ^ 2) := one_le_pow₀ hMR
   have hC : 1 ≤ rdE E ^ ((fdeg E : ℝ) * ((r : ℝ) ^ 2 - 1) / 2) := Real.one_le_rpow hrd1 hexp0
   refine ⟨?_, ?_⟩
-  · rw [hm]
-    have := one_le_mul_of_one_le_of_one_le (one_le_mul_of_one_le_of_one_le hA hB) hC
-    nlinarith
+  · rw [hm, mul_assoc, mul_assoc]
+    have := one_le_mul_of_one_le_of_one_le hA (one_le_mul_of_one_le_of_one_le hB hC)
+    linarith
   · rw [hm, Real.log_mul (by positivity) (by positivity), Real.log_mul (by positivity) (by positivity),
       Real.log_mul (by positivity) (by positivity), Real.log_mul (by positivity) (by positivity),
       Real.log_pow, Real.log_pow, Real.log_rpow (by linarith), hlrd]
@@ -260,7 +265,7 @@ theorem massLev_size (E : Type) [Field E] [NumberField E] [IsCMField E] (r M : �
       (Real.log (classNumber E)) 1 1 ((fdeg E : ℝ) * r * (r - 1) / 2) hfR hrR hL hfr' hlrd0 hlrd2 hlM0 hlM
       (by unfold dE at *; exact hlh) le_rfl (by simp [hlrd0]) one_pos rfl).2.2.1
     push_cast
-    nlinarith [key]
+    exact (le_of_eq (by ring)).trans key
 
 end GlobalTheory.SupConstSize
 
@@ -290,13 +295,17 @@ theorem _root_.GlobalTheory.SupConstSize.epsLev_bounds (E : Type) [Field E] [Num
     ring
   unfold _root_.GlobalTheory.LevGeo.epsLev _root_.ReciprocityTheory.ChartRestriction.G.FD.epStar
   refine ⟨lt_min one_pos hpos, min_le_left _ _, le_min ?_ ?_⟩
-  · rw [e, div_le_one (by positivity)]
-    nlinarith [mul_nonneg (sub_nonneg.2 hA) (sub_nonneg.2 hB)]
+  · rw [e, div_le_one (by positivity), mul_assoc]
+    linarith [one_le_mul_of_one_le_of_one_le hA hB]
   · rw [e, div_le_div_iff₀ (by positivity) hden]
     have hAB : 0 < (M : ℝ) * Real.sqrt d := by linarith
     have key : 2 * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w + 2) * Real.log 2 ≤ 3 * Real.pi * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w) := by
-      nlinarith [mul_lt_mul_of_pos_left hl2 (by linarith : (0 : ℝ) < (_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w),
-        mul_lt_mul_of_pos_left hpi (by linarith : (0 : ℝ) < (_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w)]
+      calc 2 * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w + 2) * Real.log 2
+          ≤ 2 * (3 * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w)) * Real.log 2 :=
+            mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left (by linarith) (by norm_num)) hl0.le
+        _ = (6 * Real.log 2) * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w) := by ring
+        _ ≤ (3 * Real.pi) * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w) :=
+            mul_le_mul_of_nonneg_right (by linarith) (by linarith)
     have e1 : 1 * (2 * (M : ℝ) * Real.sqrt d * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w + 2) * 1 * Real.log 2) =
         ((M : ℝ) * Real.sqrt d) * (2 * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w + 2) * Real.log 2) := by ring
     have e2 : Real.pi * (3 * ((_root_.ReciprocityTheory.ChartRestriction.G.FD.fdeg E : ℝ) * w) * ((M : ℝ) * Real.sqrt d)) =
@@ -403,9 +412,10 @@ theorem _root_.GlobalTheory.SupConstSize.chart_factor_size (E : Type) [Field E] 
   have hw0 : 0 < w := by linarith
   set u : ℝ := 200 * (r : ℝ) ^ 3 * (w + f) with hu
   have hu4 : 4 ≤ u := by
-    have : 1 ≤ (r : ℝ) ^ 3 := one_le_pow₀ (by linarith)
-    have : 2 ≤ w + f := by linarith
-    nlinarith
+    have hr3 : 1 ≤ (r : ℝ) ^ 3 := one_le_pow₀ (by linarith)
+    have hwf2 : 2 ≤ w + f := by linarith
+    have := mul_le_mul hr3 hwf2 (by norm_num) (by linarith)
+    rw [hu, mul_assoc]; linarith
   have hu0 : 0 < u := by linarith
   have hq : Real.pi * (1 / u) ^ 2 = Real.pi / u ^ 2 := by
     rw [div_pow, one_pow, mul_one_div]
@@ -413,7 +423,10 @@ theorem _root_.GlobalTheory.SupConstSize.chart_factor_size (E : Type) [Field E] 
   have hqpos : 0 < Real.pi / u ^ 2 := div_pos Real.pi_pos (by positivity)
   have hq1 : Real.pi / u ^ 2 ≤ 1 := by
     rw [div_le_one (by positivity)]
-    nlinarith [Real.pi_lt_four]
+    have : (16 : ℝ) ≤ u ^ 2 := by
+      calc (16 : ℝ) = 4 ^ 2 := by norm_num
+        _ ≤ u ^ 2 := pow_le_pow_left₀ (by norm_num) hu4 2
+    linarith [Real.pi_lt_four]
   have hnR : (1 : ℝ) ≤ n := by exact_mod_cast hn1
   have hfac : (1 : ℝ) ≤ (n.factorial : ℝ) := by exact_mod_cast Nat.factorial_pos n
   refine ⟨?_, ?_⟩
@@ -424,7 +437,10 @@ theorem _root_.GlobalTheory.SupConstSize.chart_factor_size (E : Type) [Field E] 
       rw [div_pow (n : ℝ) (Real.pi / u ^ 2) n, ← mul_div_assoc]
       refine div_le_div_of_nonneg_right (mul_le_mul_of_nonneg_left ?_ (by norm_num)) (by positivity)
       exact_mod_cast Nat.factorial_le_pow n
-    have hwf : w + f ≤ 2 * w * f := by nlinarith [mul_nonneg (sub_nonneg.2 hw) (sub_nonneg.2 hf)]
+    have hwf : w + f ≤ 2 * w * f := by
+      linarith [mul_nonneg (sub_nonneg.2 hw) (sub_nonneg.2 hf),
+        show (w - 1) * (f - 1) = w * f - w - f + 1 by ring,
+        one_le_mul_of_one_le_of_one_le hw hf]
     have hratio : (n : ℝ) / (Real.pi / u ^ 2) ≤ 2 ^ 16 * (f * r) ^ 8 * w ^ 2 := by
       rw [div_div_eq_mul_div, div_le_iff₀ Real.pi_pos]
       have hule : u ≤ 200 * (r : ℝ) ^ 3 * (2 * w * f) := mul_le_mul_of_nonneg_left hwf (by positivity)
@@ -432,8 +448,9 @@ theorem _root_.GlobalTheory.SupConstSize.chart_factor_size (E : Type) [Field E] 
         mul_le_mul hnle (pow_le_pow_left₀ hu0.le hule 2) (by positivity) (by positivity)
       have h38 : f ^ 3 ≤ f ^ 8 := pow_le_pow_right₀ hf (by norm_num)
       have h2 : 80000 * f ^ 3 ≤ 2 ^ 16 * Real.pi * f ^ 8 := by
-        have : (80000 : ℝ) ≤ 2 ^ 16 * Real.pi := by nlinarith [Real.pi_gt_three]
-        nlinarith [pow_pos hf0 8]
+        have hpi8 : (80000 : ℝ) ≤ 2 ^ 16 * Real.pi := by linarith [Real.pi_gt_three]
+        calc 80000 * f ^ 3 ≤ 80000 * f ^ 8 := mul_le_mul_of_nonneg_left h38 (by norm_num)
+          _ ≤ (2 ^ 16 * Real.pi) * f ^ 8 := mul_le_mul_of_nonneg_right hpi8 (pow_nonneg hf0.le 8)
       calc (n : ℝ) * u ^ 2 ≤ f * (r : ℝ) ^ 2 / 2 * (200 * (r : ℝ) ^ 3 * (2 * w * f)) ^ 2 := h1
         _ = ((r : ℝ) ^ 8 * w ^ 2) * (80000 * f ^ 3) := by ring
         _ ≤ ((r : ℝ) ^ 8 * w ^ 2) * (2 ^ 16 * Real.pi * f ^ 8) :=
@@ -494,7 +511,9 @@ theorem locConst_mul_size (E : Type) [Field E] [NumberField E] [IsCMField E] (r 
     have a : 1 ≤ (fdeg E : ℝ) * w := one_le_mul_of_one_le_of_one_le hfR hw
     have b : 1 ≤ (fdeg E : ℝ) * w * M := one_le_mul_of_one_le_of_one_le a hMR
     have c : 1 ≤ (fdeg E : ℝ) * w * M * Real.sqrt d := one_le_mul_of_one_le_of_one_le b sd
-    rw [hB]; nlinarith
+    rw [hB, show 3 * (fdeg E : ℝ) * w * M * Real.sqrt d =
+      3 * ((fdeg E : ℝ) * w * M * Real.sqrt d) by ring]
+    linarith
   have l2b := Real.log_two_lt_d9
   have l2a := Real.log_two_gt_d9
   have l3 : Real.log 3 ≤ 2 * Real.log 2 := by
@@ -548,7 +567,10 @@ theorem supConst_size : ∀ (E : Type) [Field E] [NumberField E] [IsCMField E] (
   intro E _ _ _ r d M w L hr hd hM hL hw hfr hlM hdE hld hlw
   obtain ⟨hM1, hMl⟩ := massLev_size E r M L hr hM hL hfr hlM hdE
   exact locConst_mul_size E r d M w L (massLev E r M) hr hd hM hL hw hfr hlM hdE hld hlw hM1
-    (hMl.trans (by nlinarith [show (0 : ℝ) ≤ (fdeg E : ℝ) * (r : ℝ) ^ 2 * L by positivity]))
+    (hMl.trans (by
+      linarith [show (0 : ℝ) ≤ (fdeg E : ℝ) * (r : ℝ) ^ 2 * L by positivity,
+        show 80 * (fdeg E : ℝ) * (r : ℝ) ^ 2 * L = 80 * ((fdeg E : ℝ) * (r : ℝ) ^ 2 * L) by ring,
+        show 130 * (fdeg E : ℝ) * (r : ℝ) ^ 2 * L = 130 * ((fdeg E : ℝ) * (r : ℝ) ^ 2 * L) by ring]))
 
 end GlobalTheory.SupConstSize
 end -- clump:auto
