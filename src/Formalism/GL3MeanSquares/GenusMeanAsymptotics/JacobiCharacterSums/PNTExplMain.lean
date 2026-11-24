@@ -140,7 +140,7 @@ theorem ex_horiz_bound {M : ℕ} [NeZero M] (χ : DirichletCharacter ℂ M) (y �
       rw [← this]; exact Complex.abs_im_le_norm _
     have hpow : y ^ x ≤ y ^ σ₀ := Real.rpow_le_rpow_of_exponent_le hy hx.2
     have hden : v ^ 2 ≤ ‖w‖ * ‖w - 1‖ := by
-      rw [← sq_abs]; nlinarith [abs_nonneg v]
+      rw [← sq_abs, sq]; exact mul_le_mul hw1 hw2 (abs_nonneg v) (norm_nonneg w)
     have htp : 0 < v ^ 2 := by rw [← sq_abs]; positivity
     have hyp : 0 ≤ y ^ σ₀ := Real.rpow_nonneg hy0.le _
     calc ‖negLD χ w‖ * y ^ x / (‖w‖ * ‖w - 1‖)
@@ -214,7 +214,7 @@ theorem ex_tail_bound : ∃ C : ℝ, 0 ≤ C ∧ ∀ (M : ℕ) [NeZero M] (χ : 
         have : (w - 1).im = t := by simp [him]
         rw [← this]; exact Complex.abs_im_le_norm _
       have hden : t ^ 2 ≤ ‖w‖ * ‖w - 1‖ := by
-        rw [← sq_abs]; nlinarith [abs_nonneg t]
+        rw [← sq_abs, sq]; exact mul_le_mul hw1 hw2 (abs_nonneg t) (norm_nonneg w)
       have htp : 0 < t ^ 2 := by rw [← sq_abs]; positivity
       have hnum : 0 ≤ 1 / (σ₀ - 1) + C := le_trans (norm_nonneg _) hζ
       have hyp : 0 ≤ y ^ σ₀ := Real.rpow_nonneg hy0.le _
@@ -255,7 +255,9 @@ lemma ex_sum_le {δ : ℝ} (hδ : 0 < δ) (Z : Finset ℂ) (m : ℂ → ℕ) (s 
 lemma ex_one_le_log {M : ℕ} (hM : 3 ≤ M) (t : ℝ) : 1 ≤ Real.log ((M : ℝ) * (|t| + 2)) := by
   have hM' : (3 : ℝ) ≤ M := by exact_mod_cast hM
   have h0 := abs_nonneg t
-  have h6 : (6 : ℝ) ≤ (M : ℝ) * (|t| + 2) := by nlinarith
+  have h6 : (6 : ℝ) ≤ (M : ℝ) * (|t| + 2) := by
+    have := mul_le_mul hM' (show (2 : ℝ) ≤ |t| + 2 by linarith) (by norm_num) (by linarith)
+    linarith
   rw [Real.le_log_iff_exp_le (by linarith)]
   have := Real.exp_one_lt_d9
   linarith
@@ -325,8 +327,7 @@ theorem ex_negLD_bound : ∃ C : ℝ, 0 < C ∧ ∀ (M : ℕ) [NeZero M] (χ : D
       linarith
     have hCL : C₁ * large₂ ≤ C₁ * large₂ / δ := by
       rw [le_div_iff₀ hδ]
-      have : 0 ≤ C₁ * large₂ := by positivity
-      nlinarith
+      exact mul_le_of_le_one_right (by positivity) (by linarith)
     have hI : ‖(if χ = 1 then 1 / (s - 1) else 0 : ℂ)‖ = (if χ = 1 then 1 / ‖s - 1‖ else 0) := by
       split_ifs <;> simp
     rw [negLD_eq_exLF χ hsne hne]
@@ -1072,8 +1073,9 @@ theorem ex_pick (S : Finset ℝ) (a b : ℝ) (hab : a < b) :
       exact_mod_cast Nat.lt_succ_iff.mp this
     have hi0 : (0 : ℝ) ≤ i := Nat.cast_nonneg i
     apply hcon
-    · nlinarith
-    · nlinarith
+    · linarith [mul_nonneg (by linarith : (0 : ℝ) ≤ 2 * (i : ℝ) + 1) hpos.le]
+    · have := mul_le_mul_of_nonneg_right (show 2 * (i : ℝ) + 1 ≤ 2 * ((S.card : ℝ) + 1) by linarith) hpos.le
+      linarith [show 2 * ((S.card : ℝ) + 1) * h = h * (2 * ((S.card : ℝ) + 1)) by ring]
   choose! f hfS hf using key
   have hcard : S.card < (Finset.range (S.card + 1)).card := by simp
   obtain ⟨i, hi, j, hj, hij, hfij⟩ :=
@@ -1084,9 +1086,11 @@ theorem ex_pick (S : Finset ℝ) (a b : ℝ) (hab : a < b) :
   rw [abs_lt] at h1 h2
   rcases lt_or_gt_of_ne hij with hlt | hlt
   · have : (i : ℝ) + 1 ≤ j := by exact_mod_cast hlt
-    nlinarith
+    have h3 := mul_le_mul_of_nonneg_right (show 2 * (i : ℝ) + 3 ≤ 2 * (j : ℝ) + 1 by linarith) hpos.le
+    linarith [show (2 * (i : ℝ) + 3) * h = (2 * (i : ℝ) + 1) * h + 2 * h by ring]
   · have : (j : ℝ) + 1 ≤ i := by exact_mod_cast hlt
-    nlinarith
+    have h3 := mul_le_mul_of_nonneg_right (show 2 * (j : ℝ) + 3 ≤ 2 * (i : ℝ) + 1 by linarith) hpos.le
+    linarith [show (2 * (j : ℝ) + 3) * h = (2 * (j : ℝ) + 1) * h + 2 * h by ring]
 
 theorem ex_choose : ∃ C : ℝ, 0 < C ∧ ∀ κ : ℝ, 0 < κ → κ ≤ 1 / 20 →
     ∀ (M : ℕ) [NeZero M] (χ : DirichletCharacter ℂ M) (T : ℝ), 3 ≤ M → 2 ≤ T →
@@ -1102,24 +1106,36 @@ theorem ex_choose : ∃ C : ℝ, 0 < C ∧ ∀ κ : ℝ, 0 < κ → κ ≤ 1 / 2
   set N : ℝ := (Z.card : ℝ) with hN
   have hN0 : 0 ≤ N := Nat.cast_nonneg _
   set lg : ℝ := Real.log ((M : ℝ) * (T + 2)) with hlg
-  have hx12 : (12 : ℝ) ≤ (M : ℝ) * (T + 2) := by nlinarith
+  have hx12 : (12 : ℝ) ≤ (M : ℝ) * (T + 2) := by
+    have := mul_le_mul hMr (show (4 : ℝ) ≤ T + 2 by linarith) (by norm_num) (by linarith)
+    linarith
   have hlg1 : 1 ≤ lg := by
     rw [hlg, Real.le_log_iff_exp_le (by linarith)]
     have := Real.exp_one_lt_d9
     linarith
   have hlg2 : Real.log ((M : ℝ) * (T + 3 + 2)) ≤ 2 * lg := by
-    have h1 : (M : ℝ) * (T + 3 + 2) ≤ ((M : ℝ) * (T + 2)) ^ 2 := by nlinarith
+    have h1 : (M : ℝ) * (T + 3 + 2) ≤ ((M : ℝ) * (T + 2)) ^ 2 := by
+      have hle : T + 3 + 2 ≤ 2 * (T + 2) := by linarith
+      have h2 : (2 : ℝ) ≤ (M : ℝ) * (T + 2) := by linarith
+      calc (M : ℝ) * (T + 3 + 2) ≤ (M : ℝ) * (2 * (T + 2)) := mul_le_mul_of_nonneg_left hle (by linarith)
+        _ = 2 * ((M : ℝ) * (T + 2)) := by ring
+        _ ≤ ((M : ℝ) * (T + 2)) * ((M : ℝ) * (T + 2)) := mul_le_mul_of_nonneg_right h2 (by linarith)
+        _ = _ := (sq _).symm
     have h2 : Real.log (((M : ℝ) * (T + 2)) ^ 2) = 2 * lg := by
       rw [Real.log_pow]; push_cast; ring
     rw [← h2]
-    exact Real.log_le_log (by nlinarith) h1
+    exact Real.log_le_log (mul_pos (by linarith) (by linarith)) h1
   have hNb : 8 * (N + 1) ≤ 8 * (4 * C0 + 1) * (T + 1) * lg := by
     have h1 : C0 * (T + 3 + 1) * Real.log ((M : ℝ) * (T + 3 + 2)) ≤ C0 * (2 * (T + 1)) * (2 * lg) := by
       apply mul_le_mul _ hlg2 _ (by positivity)
       · apply mul_le_mul_of_nonneg_left (by linarith) hC0.le
-      · apply Real.log_nonneg; nlinarith
-    have h2 : 1 ≤ (T + 1) * lg := by nlinarith
-    nlinarith
+      · apply Real.log_nonneg
+        have := mul_le_mul hMr (show (1 : ℝ) ≤ T + 3 + 2 by linarith) zero_le_one (by linarith)
+        linarith
+    have h2 : 1 ≤ (T + 1) * lg := one_le_mul_of_one_le_of_one_le (by linarith) hlg1
+    have e1 : C0 * (2 * (T + 1)) * (2 * lg) = 4 * C0 * ((T + 1) * lg) := by ring
+    have e2 : 8 * (4 * C0 + 1) * (T + 1) * lg = 8 * (4 * C0 * ((T + 1) * lg)) + 8 * ((T + 1) * lg) := by ring
+    linarith
 
   obtain ⟨σ₁, hσa, hσb, hσ⟩ := ex_pick (Z.image Complex.re) (1 - κ) (1 - 3 * κ / 4) (by linarith)
   obtain ⟨T', hTa, hTb, hT'⟩ := ex_pick (Z.image (fun ρ => |ρ.im|)) T (T + 1) (by linarith)
@@ -1132,15 +1148,18 @@ theorem ex_choose : ∃ C : ℝ, 0 < C ∧ ∀ κ : ℝ, 0 < κ → κ ≤ 1 / 2
       (1 - 3 * κ / 4 - (1 - κ)) / (2 * (((Z.image Complex.re).card : ℝ) + 1)) := by
     have e : (1 - 3 * κ / 4 - (1 - κ)) = κ / 4 := by ring
     rw [e, div_le_div_iff₀ (by positivity) (by positivity)]
-    nlinarith
+    have := mul_le_mul_of_nonneg_left (show 2 * (((Z.image Complex.re).card : ℝ) + 1) ≤ 2 * (N + 1) by linarith) hκ.le
+    linarith [show κ * (2 * (N + 1)) = κ / 4 * (8 * (N + 1)) by ring]
   have hg2 : κ / (8 * (N + 1)) ≤
       (T + 1 - T) / (2 * (((Z.image (fun ρ : ℂ => |ρ.im|)).card : ℝ) + 1)) := by
     have e : (T + 1 - T) = 1 := by ring
     rw [e, div_le_div_iff₀ (by positivity) (by positivity)]
-    nlinarith
+    have := mul_le_mul (show κ ≤ 1 by linarith)
+      (show 2 * (((Z.image (fun ρ : ℂ => |ρ.im|)).card : ℝ) + 1) ≤ 2 * (N + 1) by linarith) (by positivity) zero_le_one
+    linarith
   have hδle : κ / (8 * (N + 1)) ≤ 1 / 20 := by
     rw [div_le_div_iff₀ (by positivity) (by norm_num)]
-    nlinarith
+    linarith
   refine ⟨σ₁, T', κ / (8 * (N + 1)), hσa, hσb, hTa, hTb, hδpos, hδle, ?_, ?_, ?_⟩
   · exact div_le_div_of_nonneg_left hκ.le (by positivity) hNb
   · intro ρ h0 hre him
@@ -1229,8 +1248,8 @@ theorem smoothed_explicit_formula : ExplicitS := by
       Finset.sum_le_sum_of_subset hsub
     have h2 : (0 : ℝ) ≤ Real.log ((M : ℝ) * (|t| + 2)) := by
       apply Real.log_nonneg
-      have := abs_nonneg t
-      nlinarith
+      have := mul_le_mul hM' (show (2 : ℝ) ≤ |t| + 2 by linarith [abs_nonneg t]) (by norm_num) (by linarith)
+      linarith
     calc ((∑ ρ ∈ (Z₀.filter (fun ρ => σ₁ < ρ.re ∧ |ρ.im| < T')).filter (fun ρ => |ρ.im - t| ≤ 1),
         exOrd χ ρ : ℕ) : ℝ) ≤ ((∑ ρ ∈ Z₀.filter (fun ρ => |ρ.im - t| ≤ 1), exOrd χ ρ : ℕ) : ℝ) := by
           exact_mod_cast h1
@@ -1249,7 +1268,7 @@ theorem smoothed_explicit_formula : ExplicitS := by
     have hl := exm_left_num κ G N (M : ℝ) T T' σ₁ y hκ hκ' hG0 hN0 hNle hM' hT hTT' hT'T hσ hσ' hy
     have hy0 : 0 < y := by linarith
     have hly := exm_log_y y hy
-    have hX : 1 ≤ (M : ℝ) * T := by nlinarith
+    have hX : 1 ≤ (M : ℝ) * T := one_le_mul_of_one_le_of_one_le (by linarith) (by linarith)
     have hfin := sum_le_mul_rpow_add AL AW C ((M : ℝ) * T) (y ^ (-(κ / 2)))
       (Real.log y * Real.log ((M : ℝ) * T) ^ 2 / T) hC4 hCL hCW hX (Real.rpow_nonneg hy0.le _)
       (by have : 0 < T := by linarith

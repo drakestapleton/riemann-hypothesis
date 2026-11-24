@@ -470,7 +470,9 @@ namespace DHF
 
 theorem logMT_ge_one (M : ℕ) (T : ℝ) (hM : 3 ≤ M) (hT : 2 ≤ T) : 1 ≤ Real.log ((M : ℝ) * T) := by
   have hMr : (3 : ℝ) ≤ M := by exact_mod_cast hM
-  have hx : (6 : ℝ) ≤ M * T := by nlinarith
+  have hx : (6 : ℝ) ≤ M * T := by
+    have := mul_le_mul hMr hT (by norm_num) (by linarith)
+    linarith
   have he := Real.exp_one_lt_d9
   have h1 : Real.exp 1 ≤ (M : ℝ) * T := by linarith
   calc (1 : ℝ) = Real.log (Real.exp 1) := (Real.log_exp 1).symm
@@ -488,9 +490,9 @@ theorem region_gap : ∃ cR : ℝ, 0 < cR ∧ ∀ (M : ℕ) [NeZero M] (χ₁ χ
   have hM3 : (3 : ℝ) ≤ M := by exact_mod_cast hM
   have hlog2M : Real.log ((M : ℝ) * (|((β₁ : ℂ)).im| + 2)) ≤ Real.log ((M : ℝ) * T) := by
     simp only [Complex.ofReal_im, abs_zero, zero_add]
-    exact Real.log_le_log (by positivity) (by nlinarith)
+    exact Real.log_le_log (by positivity) (mul_le_mul_of_nonneg_left hT2 (by linarith))
   have hlog2M0 : 0 < Real.log ((M : ℝ) * (|((β₁ : ℂ)).im| + 2)) := by
-    apply Real.log_pos; simp only [Complex.ofReal_im, abs_zero, zero_add]; nlinarith
+    apply Real.log_pos; simp only [Complex.ofReal_im, abs_zero, zero_add]; linarith
   have hreg : InRegion cR M (β₁ : ℂ) := by
     unfold InRegion
     have h1 : c₁ / Real.log ((M : ℝ) * T) ≤ cR / Real.log ((M : ℝ) * (|((β₁ : ℂ)).im| + 2)) := by
@@ -508,14 +510,18 @@ theorem region_gap : ∃ cR : ℝ, 0 < cR ∧ ∀ (M : ℕ) [NeZero M] (χ₁ χ
   unfold InRegion at hnreg
   push Not at hnreg
   have hlogρ0 : 0 < Real.log ((M : ℝ) * (|ρ.im| + 2)) := by
-    apply Real.log_pos; have := abs_nonneg ρ.im; nlinarith
+    apply Real.log_pos
+    have := mul_le_mul hM3 (show (2 : ℝ) ≤ |ρ.im| + 2 by linarith [abs_nonneg ρ.im]) (by norm_num) (by linarith)
+    linarith
   have hlogρ : Real.log ((M : ℝ) * (|ρ.im| + 2)) ≤ 2 * Real.log ((M : ℝ) * T) := by
     rw [show (2 : ℝ) * Real.log ((M : ℝ) * T) = Real.log (((M : ℝ) * T) ^ 2) by
       rw [Real.log_pow]; push_cast; ring]
     apply Real.log_le_log (by have := abs_nonneg ρ.im; positivity)
     have : |ρ.im| + 2 ≤ 2 * T := by linarith
     have hM0 : (0 : ℝ) ≤ M := by positivity
-    have hMT : (2 : ℝ) ≤ M * T := by nlinarith
+    have hMT : (2 : ℝ) ≤ M * T := by
+      have := mul_le_mul hM3 hT2 (by norm_num) (by linarith)
+      linarith
     have hMT2 := mul_le_mul_of_nonneg_left hMT (by positivity : (0 : ℝ) ≤ M * T)
     calc (M : ℝ) * (|ρ.im| + 2) ≤ M * (2 * T) := mul_le_mul_of_nonneg_left this hM0
       _ ≤ _ := by rw [sq]; linarith
@@ -595,10 +601,11 @@ theorem deuring_heilbronn_finish_turan : DHFinish2Of := by
   have hη : 0 < 1 - ρ.re := by
     by_contra h
     push_neg at h
-    nlinarith
+    have := mul_nonpos_of_nonpos_of_nonneg h hLpos.le
+    linarith
   have hηZ : cZ / (2 * Real.log ((M : ℝ) * T)) ≤ 1 - ρ.re := by
     rw [div_le_iff₀ (by positivity)]
-    nlinarith
+    linarith [show (1 - ρ.re) * (2 * Real.log ((M : ℝ) * T)) = 2 * ((1 - ρ.re) * Real.log ((M : ℝ) * T)) by ring]
   have hηc0 : 1 - ρ.re ≤ TuranPowerSumBounds.c0 a := by linarith
   have hlam : 0 < 1 - β₁ := by linarith
   have hEx := hE M χ₁ β₁ hsq hne1 hL
@@ -614,9 +621,13 @@ theorem deuring_heilbronn_finish_turan : DHFinish2Of := by
   have hℓ0 : 0 ≤ Real.log (3 * (M : ℝ)) := Real.log_nonneg (by linarith)
   have hℓpos : 0 < Real.log (3 * (M : ℝ)) := Real.log_pos (by linarith)
   have hℓL : Real.log (3 * (M : ℝ)) ≤ 2 * Real.log ((M : ℝ) * T) := by
-    have hT4 : (4 : ℝ) ≤ T ^ 2 := by nlinarith
+    have hT4 : (4 : ℝ) ≤ T ^ 2 := by
+      have := pow_le_pow_left₀ (by norm_num : (0 : ℝ) ≤ 2) hT 2
+      linarith
     have h3 : 3 * (M : ℝ) ≤ ((M : ℝ) * T) ^ 2 := by
-      nlinarith [mul_le_mul_of_nonneg_left hT4 (sq_nonneg (M : ℝ))]
+      have hm := mul_le_mul_of_nonneg_left hT4 (sq_nonneg (M : ℝ))
+      have hM2 : 3 * (M : ℝ) ≤ (M : ℝ) ^ 2 := by rw [sq]; exact mul_le_mul_of_nonneg_right hM3 hMpos.le
+      linarith [show ((M : ℝ) * T) ^ 2 = (M : ℝ) ^ 2 * T ^ 2 by ring]
     calc Real.log (3 * (M : ℝ)) ≤ Real.log (((M : ℝ) * T) ^ 2) :=
           Real.log_le_log (by linarith) h3
       _ = 2 * Real.log ((M : ℝ) * T) := by
@@ -656,14 +667,16 @@ theorem deuring_heilbronn_finish_turan : DHFinish2Of := by
   have hβ20 : (19 / 20 : ℝ) ≤ β₁ := by
     have : c₁ / Real.log ((M : ℝ) * T) ≤ 1 / 20 := by
       rw [div_le_iff₀ hLpos]
-      nlinarith
+      linarith
     linarith
   obtain ⟨N, w, hwre, hwex, hwsum, hwj⟩ := hF M χ₁ χ β₁ T (1 - ρ.re) ρ hM hT hsq hne1 hL hβ20 hβ1
     hρ hρre hIm hne hη (by linarith)
   have hβP : 1 - 1 / Real.log (3 * (M : ℝ)) ≤ β₁ := by
     have : c₁ / Real.log ((M : ℝ) * T) ≤ 1 / Real.log (3 * (M : ℝ)) := by
       rw [div_le_div_iff₀ hLpos hℓpos]
-      nlinarith
+      have h1 := mul_le_mul_of_nonneg_left hℓL hc₁pos.le
+      have h2 := mul_le_mul_of_nonneg_right (show 2 * c₁ ≤ 1 by linarith) hLpos.le
+      linarith [show c₁ * (2 * Real.log ((M : ℝ) * T)) = 2 * c₁ * Real.log ((M : ℝ) * T) by ring]
     linarith
   refine TuranPowerSumBounds.core2 CT a hCT ha hT2 CF CP cZ cS c₁ c₂ hCF hCP hcZ hcS hc₁pos hc₁Z hc₂pos hc₂k hc₂t
     (Real.log ((M : ℝ) * T)) (Real.log (3 * (M : ℝ))) (1 - β₁) (1 - ρ.re) (M : ℝ)

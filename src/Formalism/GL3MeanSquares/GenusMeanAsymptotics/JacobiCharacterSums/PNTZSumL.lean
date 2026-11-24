@@ -328,12 +328,18 @@ theorem zeroSum_core (a B C : ℝ) (ha : 1 ≤ a) (hB : 0 ≤ B) (hC : 1 ≤ C)
   have hpow1 : 1 ≤ (M : ℝ) ^ A₁ := Real.one_le_rpow (by linarith) (by linarith)
   obtain ⟨L, hLdef⟩ : ∃ L, L = Real.log ((M : ℝ) * ((M : ℝ) ^ A₁ + 3)) := ⟨_, rfl⟩
   rw [← hLdef] at hθ
-  have hLpos : 0 < L := by rw [hLdef]; exact Real.log_pos (by nlinarith)
+  have hLpos : 0 < L := by
+    rw [hLdef]
+    exact Real.log_pos (by have := mul_le_mul hMr (show (1 : ℝ) ≤ (M : ℝ) ^ A₁ + 3 by linarith) zero_le_one (by linarith); linarith)
   have hLT : L ≤ (A₁ + 2) * Real.log M := by
     have hstep : (M : ℝ) * ((M : ℝ) ^ A₁ + 3) ≤ (M : ℝ) ^ (A₁ + 2) := by
       rw [Real.rpow_add (by linarith : (0 : ℝ) < M), Real.rpow_two]
-      nlinarith [mul_nonneg (sub_nonneg.mpr hpow1) (by nlinarith : (0 : ℝ) ≤ (M : ℝ) * ((M : ℝ) - 1)),
-        mul_nonneg (sub_nonneg.mpr hMr) (by linarith : (0 : ℝ) ≤ (M : ℝ))]
+      have hm1 : 0 ≤ ((M : ℝ) ^ A₁ - 1) * ((M : ℝ) * ((M : ℝ) - 1)) :=
+        mul_nonneg (sub_nonneg.mpr hpow1) (mul_nonneg (by linarith) (by linarith))
+      have hm2 : 0 ≤ ((M : ℝ) - 4) * (M : ℝ) := mul_nonneg (by linarith) (by linarith)
+      have heq : (M : ℝ) ^ A₁ * (M : ℝ) ^ 2 - (M : ℝ) * ((M : ℝ) ^ A₁ + 3) =
+          ((M : ℝ) ^ A₁ - 1) * ((M : ℝ) * ((M : ℝ) - 1)) + ((M : ℝ) - 4) * (M : ℝ) := by ring
+      linarith
     rw [hLdef]
     calc Real.log ((M : ℝ) * ((M : ℝ) ^ A₁ + 3)) ≤ Real.log ((M : ℝ) ^ (A₁ + 2)) :=
           Real.log_le_log (mul_pos (by linarith) (by linarith)) hstep
@@ -351,7 +357,7 @@ theorem zeroSum_core (a B C : ℝ) (ha : 1 ≤ a) (hB : 0 ≤ B) (hC : 1 ≤ C)
     have him := (hZ χ ρ hρ).2.2
     have ha0 := abs_nonneg ρ.im
     constructor
-    · exact Real.log_pos (by nlinarith)
+    · exact Real.log_pos (by have := mul_le_mul hMr (show (2 : ℝ) ≤ |ρ.im| + 2 by linarith) (by norm_num) (by linarith); linarith)
     · rw [hLdef]
       exact Real.log_le_log (mul_pos (by linarith) (by linarith))
         (mul_le_mul_of_nonneg_left (by linarith) (by linarith))
@@ -365,13 +371,16 @@ theorem zeroSum_core (a B C : ℝ) (ha : 1 ≤ a) (hB : 0 ≤ B) (hC : 1 ≤ C)
     have h4 : 0 < 1 - ρ.re := by
       by_contra hc
       push_neg at hc
-      nlinarith
-    nlinarith [mul_le_mul_of_nonneg_left h2 h4.le]
+      have := mul_nonpos_of_nonpos_of_nonneg hc h1.le
+      linarith
+    have := mul_le_mul_of_nonneg_left h2 h4.le
+    linarith
   have hZFR := (Classical.choose_spec Formalism.ZeroFreeDirichlet.zFRDirichlet).2
   have hwide : ∀ s : ℂ, InRegion cZ M s → InRegion (Classical.choose Formalism.ZeroFreeDirichlet.zFRDirichlet) M s := by
     intro s hs
     unfold InRegion at hs ⊢
-    have hl : 0 < Real.log ((M : ℝ) * (|s.im| + 2)) := Real.log_pos (by nlinarith [abs_nonneg s.im])
+    have hl : 0 < Real.log ((M : ℝ) * (|s.im| + 2)) :=
+      Real.log_pos (by have := mul_le_mul hMr (show (2 : ℝ) ≤ |s.im| + 2 by linarith [abs_nonneg s.im]) (by norm_num) (by linarith); linarith)
     have : cZ / Real.log ((M : ℝ) * (|s.im| + 2)) ≤
         Classical.choose Formalism.ZeroFreeDirichlet.zFRDirichlet / Real.log ((M : ℝ) * (|s.im| + 2)) := by
       rw [div_eq_mul_inv, div_eq_mul_inv]
@@ -432,7 +441,10 @@ theorem zeroSum_core (a B C : ℝ) (ha : 1 ≤ a) (hB : 0 ≤ B) (hC : 1 ≤ C)
     rw [hyr]
     have hE := Real.exp_pos (-(L * (1 - ρ.re) * Real.log y / L))
     have hex0 : (0 : ℝ) ≤ excW (eOf M) χ ρ := Nat.cast_nonneg _
-    nlinarith [mul_nonneg hex0 hE.le]
+    have := mul_nonneg hex0 hE.le
+    linarith [show ((m χ ρ : ℝ) - (excW (eOf M) χ ρ : ℝ)) * Real.exp (-(L * (1 - ρ.re) * Real.log y / L)) =
+      (m χ ρ : ℝ) * Real.exp (-(L * (1 - ρ.re) * Real.log y / L)) -
+      (excW (eOf M) χ ρ : ℝ) * Real.exp (-(L * (1 - ρ.re) * Real.log y / L)) by ring]
   obtain ⟨W, hWdef⟩ : ∃ W : DirichletCharacter ℂ M → Finset ℂ,
       W = fun χ => (Z χ).filter (fun ρ => ¬ InRegion cZ M ρ) := ⟨_, rfl⟩
   have hWmem : ∀ χ ρ, ρ ∈ W χ ↔ ρ ∈ Z χ ∧ ¬ InRegion cZ M ρ := by
@@ -529,7 +541,8 @@ theorem zeroSum_core (a B C : ℝ) (ha : 1 ≤ a) (hB : 0 ≤ B) (hC : 1 ≤ C)
         have hre2 : p.2.re ≤ 1 := by
           by_contra hc
           push_neg at hc
-          nlinarith
+          have := mul_nonpos_of_nonneg_of_nonpos hLpos.le (by linarith : 1 - p.2.re ≤ 0)
+          linarith
         refine ⟨by linarith, hre2, ?_, by linarith, hz⟩
         rw [← hLdef]
         exact hinfo.2.2
@@ -655,7 +668,9 @@ theorem density_norm (h : LogDensityM) :
   refine ⟨max A 1, max B 0, max C 1, le_max_right _ _, le_max_right _ _, le_max_right _ _, ?_⟩
   intro M _ T v S hM hT hS hsp
   have hM' : (3 : ℝ) ≤ M := by exact_mod_cast hM
-  have hMT : (6 : ℝ) ≤ (M : ℝ) * T := by nlinarith
+  have hMT : (6 : ℝ) ≤ (M : ℝ) * T := by
+    have := mul_le_mul hM' hT (by norm_num) (by linarith)
+    linarith
   set ℓ : ℝ := Real.log ((M : ℝ) * T) with hℓ
   have hℓ1 : 1 ≤ ℓ := by
     rw [hℓ, Real.le_log_iff_exp_le (by linarith)]
@@ -721,11 +736,13 @@ theorem ell_bounds (M : ℕ) (hM : 8 ≤ M) (A₁ : ℝ) (hA : 1 ≤ A₁) :
     have := Real.log_two_gt_d9
     linarith
   · apply Real.log_le_log hM0
-    nlinarith
+    exact le_mul_of_one_le_right hM0.le (by linarith)
   · have h1 : (M : ℝ) * ((M : ℝ) ^ A₁ + 3) ≤ (M : ℝ) ^ (A₁ + 2) := by
       rw [Real.rpow_add hM0, show ((M : ℝ) ^ (2 : ℝ)) = (M : ℝ) * M by
         rw [show (2 : ℝ) = ((2 : ℕ) : ℝ) by norm_num, Real.rpow_natCast]; ring]
-      have h2 : (M : ℝ) ^ A₁ + 3 ≤ (M : ℝ) ^ A₁ * M := by nlinarith
+      have h2 : (M : ℝ) ^ A₁ + 3 ≤ (M : ℝ) ^ A₁ * M := by
+        have := mul_le_mul_of_nonneg_left hM' (by linarith : (0 : ℝ) ≤ (M : ℝ) ^ A₁)
+        linarith
       calc (M : ℝ) * ((M : ℝ) ^ A₁ + 3) ≤ (M : ℝ) * ((M : ℝ) ^ A₁ * M) :=
             mul_le_mul_of_nonneg_left h2 hM0.le
         _ = _ := by ring
@@ -812,10 +829,12 @@ theorem zero_sum_bound_lossy : ZeroSumOfB := by
   have hL1 : K0 * Real.log M * Real.log (Real.log M + 2) ≤ Real.log y := by
     have : 0 ≤ 2 * N / c * (Real.log M * Real.log (Real.log M + 2)) :=
       mul_nonneg (by positivity) hll
-    nlinarith
+    linarith [show (K0 + 2 * N / c) * Real.log M * Real.log (Real.log M + 2) =
+      K0 * Real.log M * Real.log (Real.log M + 2) + 2 * N / c * (Real.log M * Real.log (Real.log M + 2)) by ring]
   have hL2 : 2 * N / c * Real.log M * Real.log (Real.log M + 2) ≤ Real.log y := by
     have : 0 ≤ K0 * (Real.log M * Real.log (Real.log M + 2)) := mul_nonneg hK00 hll
-    nlinarith
+    linarith [show (K0 + 2 * N / c) * Real.log M * Real.log (Real.log M + 2) =
+      K0 * (Real.log M * Real.log (Real.log M + 2)) + 2 * N / c * Real.log M * Real.log (Real.log M + 2) by ring]
   have habs := pow_absorb N c (Real.log M) (Real.log y) hc0 hl2 hL2
   suffices h : ∃ θ : ℝ, 0 < θ ∧ θ ≤ 1 ∧ η0 * θ ≤ etaOf M * ℓ ^ N ∧
       (∀ χ, ∀ ρ ∈ Z χ, ¬ InRegion cZ M ρ → c₂ * Real.log (1 / θ) ≤ ℓ * (1 - ρ.re)) by
@@ -857,7 +876,7 @@ theorem zero_sum_bound_lossy : ZeroSumOfB := by
     unfold InRegion at hr
     replace hr := not_le.mp hr
     have habs := abs_nonneg ρ.im
-    have h1 : (1 : ℝ) ≤ (M : ℝ) * (|ρ.im| + 2) := by nlinarith
+    have h1 : (1 : ℝ) ≤ (M : ℝ) * (|ρ.im| + 2) := one_le_mul_of_one_le_of_one_le (by linarith) (by linarith)
     have h2 : 0 ≤ cZ / Real.log ((M : ℝ) * (|ρ.im| + 2)) := div_nonneg hcZ.le (Real.log_nonneg h1)
     have h3 : 0 ≤ ℓ * (1 - ρ.re) := mul_nonneg hℓ0.le (by linarith)
     simpa using h3
